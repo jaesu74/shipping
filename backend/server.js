@@ -34,7 +34,7 @@ const PORT = process.env.PORT || 5000;
 
 // CORS 설정
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://ship.wvl.co.kr', 'http://ship.wvl.co.kr'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -164,8 +164,79 @@ const dataSources = [
       { name: "싱가포르 VLSFO", id: "vlsfo_singapore" },
       { name: "로테르담 VLSFO", id: "vlsfo_rotterdam" }
     ]
+  },
+  { 
+    name: "신조선 가격 지수", 
+    url: "https://www.clarksons.net/n/#/mqs/newbuilding-prices",
+    method: "puppeteer",
+    indices: [
+      { name: "컨테이너선 신조선 가격", id: "newbuild_container" },
+      { name: "탱커선 신조선 가격", id: "newbuild_tanker" },
+      { name: "벌크선 신조선 가격", id: "newbuild_bulk" },
+      { name: "LNG선 신조선 가격", id: "newbuild_lng" }
+    ]
+  },
+  { 
+    name: "중고선 가격 지수", 
+    url: "https://www.clarksons.net/n/#/mqs/second-hand-prices",
+    method: "puppeteer",
+    indices: [
+      { name: "5년 중고 컨테이너선 가격", id: "secondhand_container_5y" },
+      { name: "5년 중고 탱커선 가격", id: "secondhand_tanker_5y" },
+      { name: "5년 중고 벌크선 가격", id: "secondhand_bulk_5y" },
+      { name: "10년 중고 컨테이너선 가격", id: "secondhand_container_10y" },
+      { name: "10년 중고 탱커선 가격", id: "secondhand_tanker_10y" },
+      { name: "10년 중고 벌크선 가격", id: "secondhand_bulk_10y" }
+    ]
+  },
+  { 
+    name: "정기용선료 지수", 
+    url: "https://www.clarksons.net/n/#/mqs/timecharter-rates",
+    method: "puppeteer",
+    indices: [
+      { name: "컨테이너선 용선료 (1700 TEU)", id: "tc_container_1700" },
+      { name: "컨테이너선 용선료 (4400 TEU)", id: "tc_container_4400" },
+      { name: "벌크선 용선료 (케이프사이즈)", id: "tc_bulk_capesize" },
+      { name: "벌크선 용선료 (파나막스)", id: "tc_bulk_panamax" },
+      { name: "탱커선 용선료 (VLCC)", id: "tc_tanker_vlcc" },
+      { name: "탱커선 용선료 (MR)", id: "tc_tanker_mr" }
+    ]
+  },
+  { 
+    name: "나용선료 지수", 
+    url: "https://www.clarksons.net/n/#/mqs/bareboat-rates",
+    method: "selenium",
+    indices: [
+      { name: "컨테이너선 나용선료", id: "bb_container" },
+      { name: "탱커선 나용선료", id: "bb_tanker" },
+      { name: "벌크선 나용선료", id: "bb_bulk" },
+      { name: "LNG선 나용선료", id: "bb_lng" }
+    ]
+  },
+  { 
+    name: "주요 항구별 운임 정보", 
+    url: "https://www.freightos.com/freight-resources/freight-rate-index-industry-pricing/",
+    method: "puppeteer",
+    indices: [
+      { name: "상하이-로테르담 운임", id: "freight_shanghai_rotterdam" },
+      { name: "상하이-로스앤젤레스 운임", id: "freight_shanghai_la" },
+      { name: "상하이-뉴욕 운임", id: "freight_shanghai_newyork" },
+      { name: "부산-로테르담 운임", id: "freight_busan_rotterdam" },
+      { name: "부산-로스앤젤레스 운임", id: "freight_busan_la" }
+    ]
+  },
+  { 
+    name: "주요 화물별 운임 정보", 
+    url: "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry",
+    method: "puppeteer",
+    indices: [
+      { name: "컨테이너 화물 운임", id: "cargo_container" },
+      { name: "냉동화물 운임", id: "cargo_reefer" },
+      { name: "건화물 운임", id: "cargo_dry" },
+      { name: "특수화물 운임", id: "cargo_special" },
+      { name: "위험물 운임", id: "cargo_hazardous" }
+    ]
   }
-  // 필요한 경우 여기에 다른 데이터 소스 추가
 ];
 
 // ===== 웹 스크래핑 함수 =====
@@ -436,119 +507,594 @@ async function downloadAndParseFile(source) {
   }
 }
 
-// ===== 데이터 수집 및 처리 함수 =====
-
-// 주요 데이터 수집 함수
-async function collectAllShippingData() {
-  logger.info('해운 데이터 수집 시작...');
-  const startTime = Date.now();
-  const results = {};
-  
-  for (const source of dataSources) {
-    try {
-      logger.info(`${source.name} 데이터 수집 중...`);
-      let sourceData;
-      
-      // 데이터 소스 유형에 따른 스크래핑 방법 선택
-      switch (source.method) {
-        case 'selenium':
-          sourceData = await scrapeWithSelenium(source);
-          break;
-        case 'puppeteer':
-          sourceData = await scrapeWithPuppeteer(source);
-          break;
-        case 'api':
-          sourceData = await fetchFromAPI(source);
-          break;
-        case 'file':
-          sourceData = await downloadAndParseFile(source);
-          break;
-        default:
-          logger.warn(`알 수 없는 수집 방법: ${source.method}`);
-          continue;
-      }
-      
-      if (sourceData) {
-        results[source.name.replace(/\s+/g, '_').toLowerCase()] = sourceData;
-        logger.info(`${source.name} 데이터 수집 완료`);
-      }
-    } catch (error) {
-      logger.error(`${source.name} 데이터 수집 실패: ${error.message}`);
-    }
-  }
-  
-  // 결과 처리 및 저장
+// 셀레니움으로 나용선료 데이터 수집 함수
+async function scrapeBareBoatRates(driver, source) {
+  let results = [];
   try {
-    const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+    logger.info('나용선료 데이터 수집 중...');
     
-    // 원본 데이터 저장
-    const rawDataPath = path.join(dataDir, `shipping_data_raw_${timestamp}.json`);
-    fs.writeFileSync(rawDataPath, JSON.stringify(results, null, 2));
-    logger.info(`원본 데이터 저장 완료: ${rawDataPath}`);
+    // URL 접속
+    await driver.get(source.url);
     
-    // 플랫한 형태의 데이터 생성 (프론트엔드 표시용)
-    const flattenedData = [];
-    
-    for (const sourceKey in results) {
-      const sourceData = results[sourceKey];
-      
-      for (const indexKey in sourceData) {
-        const indexData = sourceData[indexKey];
-        
-        // 기본 정보 추출
-        const baseName = indexData.name || indexKey;
-        const baseValue = indexData.value || 'N/A';
-        const baseChange = indexData.change || 'N/A';
-        const baseSource = indexData.source || sourceKey;
-        const baseUrl = indexData.url || '';
-        
-        // 플랫한 데이터 객체 생성
-        flattenedData.push({
-          "지수명": baseName,
-          "지수값": baseValue,
-          "변동폭": baseChange,
-          "비고": indexData.note || '-',
-          "기타": indexData.etc || '-',
-          "출처": baseUrl,
-          "수집시간": timestamp
-        });
-      }
+    // 로그인이 필요한 경우 처리
+    const loginRequired = await driver.findElements(By.css('input[type="password"]'));
+    if (loginRequired.length > 0) {
+      // 클락슨 계정 로그인
+      await driver.findElement(By.id('username')).sendKeys(process.env.CLARKSONS_USERNAME || 'demo_user');
+      await driver.findElement(By.id('password')).sendKeys(process.env.CLARKSONS_PASSWORD || 'demo_pass');
+      await driver.findElement(By.css('button[type="submit"]')).click();
+      await driver.wait(until.urlContains('mqs'), 5000);
     }
     
-    // 플랫 데이터 저장
-    const flatDataPath = path.join(dataDir, `shipping_data_flat_${timestamp}.json`);
-    fs.writeFileSync(flatDataPath, JSON.stringify(flattenedData, null, 2));
+    // 데이터 테이블 대기
+    await driver.wait(until.elementLocated(By.css('.data-table')), 10000);
     
-    // 최신 데이터로 복사 (API 제공용)
-    fs.writeFileSync(
-      path.join(dataDir, 'latest_data.json'),
-      JSON.stringify(flattenedData, null, 2)
-    );
-    
-    // CSV 형식으로도 저장
-    let csvContent = '지수명,지수값,변동폭,비고,기타,출처,수집시간\n';
-    flattenedData.forEach(item => {
-      csvContent += `"${item['지수명']}","${item['지수값']}","${item['변동폭']}","${item['비고']}","${item['기타']}","${item['출처']}","${item['수집시간']}"\n`;
+    // 컨테이너선 나용선료
+    const containerBB = await driver.findElement(By.xpath('//tr[contains(., "Container")]//td[2]')).getText();
+    results.push({
+      name: "컨테이너선 나용선료",
+      value: containerBB,
+      date: new Date().toISOString().split('T')[0]
     });
     
-    fs.writeFileSync(
-      path.join(dataDir, `shipping_data_${timestamp}.csv`),
-      csvContent
-    );
+    // 탱커선 나용선료
+    const tankerBB = await driver.findElement(By.xpath('//tr[contains(., "Tanker")]//td[2]')).getText();
+    results.push({
+      name: "탱커선 나용선료",
+      value: tankerBB,
+      date: new Date().toISOString().split('T')[0]
+    });
     
-    // 구독자에게 이메일 전송 (실제 이메일 전송 기능 필요)
-    if (subscribedEmails.length > 0) {
-      logger.info(`${subscribedEmails.length}명의 구독자에게 보고서 전송 대기 중...`);
-      // sendEmailsToSubscribers(subscribedEmails, flattenedData, timestamp);
+    // 벌크선 나용선료
+    const bulkBB = await driver.findElement(By.xpath('//tr[contains(., "Bulk")]//td[2]')).getText();
+    results.push({
+      name: "벌크선 나용선료",
+      value: bulkBB,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // LNG선 나용선료
+    const lngBB = await driver.findElement(By.xpath('//tr[contains(., "LNG")]//td[2]')).getText();
+    results.push({
+      name: "LNG선 나용선료",
+      value: lngBB,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    logger.info(`나용선료 데이터 수집 완료: ${results.length}개`);
+    return results;
+  } catch (error) {
+    logger.error(`나용선료 데이터 수집 중 오류: ${error.message}`);
+    return [];
+  }
+}
+
+// Puppeteer로 신조선 가격 데이터 수집 함수
+async function scrapeNewbuildPrices(page, source) {
+  let results = [];
+  try {
+    logger.info('신조선 가격 데이터 수집 중...');
+    
+    // URL 접속
+    await page.goto(source.url, { waitUntil: 'networkidle2', timeout: 60000 });
+    
+    // 로그인이 필요한 경우 처리
+    const loginForm = await page.$('input[type="password"]');
+    if (loginForm) {
+      // 클락슨 계정 로그인
+      await page.type('#username', process.env.CLARKSONS_USERNAME || 'demo_user');
+      await page.type('#password', process.env.CLARKSONS_PASSWORD || 'demo_pass');
+      await Promise.all([
+        page.click('button[type="submit"]'),
+        page.waitForNavigation({ waitUntil: 'networkidle2' })
+      ]);
     }
     
-    const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
-    logger.info(`데이터 수집 완료. 소요 시간: ${elapsedTime}초, 항목 수: ${flattenedData.length}`);
+    // 데이터 로딩 대기
+    await page.waitForSelector('.data-table', { timeout: 30000 });
     
-    return flattenedData;
+    // 컨테이너선 신조선 가격
+    const containerPrice = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => row.textContent.includes('Container'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "컨테이너선 신조선 가격",
+      value: containerPrice,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 탱커선 신조선 가격
+    const tankerPrice = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => row.textContent.includes('Tanker'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "탱커선 신조선 가격",
+      value: tankerPrice,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 벌크선 신조선 가격
+    const bulkPrice = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => row.textContent.includes('Bulk'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "벌크선 신조선 가격",
+      value: bulkPrice,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // LNG선 신조선 가격
+    const lngPrice = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => row.textContent.includes('LNG'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "LNG선 신조선 가격",
+      value: lngPrice,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    logger.info(`신조선 가격 데이터 수집 완료: ${results.length}개`);
+    return results;
   } catch (error) {
-    logger.error(`결과 처리 오류: ${error.message}`);
+    logger.error(`신조선 가격 데이터 수집 중 오류: ${error.message}`);
     return [];
+  }
+}
+
+// Puppeteer로 중고선 가격 데이터 수집 함수
+async function scrapeSecondhandPrices(page, source) {
+  let results = [];
+  try {
+    logger.info('중고선 가격 데이터 수집 중...');
+    
+    // URL 접속
+    await page.goto(source.url, { waitUntil: 'networkidle2', timeout: 60000 });
+    
+    // 로그인이 필요한 경우 처리
+    const loginForm = await page.$('input[type="password"]');
+    if (loginForm) {
+      // 클락슨 계정 로그인
+      await page.type('#username', process.env.CLARKSONS_USERNAME || 'demo_user');
+      await page.type('#password', process.env.CLARKSONS_PASSWORD || 'demo_pass');
+      await Promise.all([
+        page.click('button[type="submit"]'),
+        page.waitForNavigation({ waitUntil: 'networkidle2' })
+      ]);
+    }
+    
+    // 데이터 로딩 대기
+    await page.waitForSelector('.data-table', { timeout: 30000 });
+    
+    // 5년 중고 컨테이너선 가격
+    const container5y = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Container') && row.textContent.includes('5 year'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "5년 중고 컨테이너선 가격",
+      value: container5y,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 다른 중고선 가격들도 유사한 방식으로 수집
+    // 10년 중고 컨테이너선 가격
+    const container10y = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Container') && row.textContent.includes('10 year'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "10년 중고 컨테이너선 가격",
+      value: container10y,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 5년 중고 탱커선 가격
+    const tanker5y = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Tanker') && row.textContent.includes('5 year'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "5년 중고 탱커선 가격",
+      value: tanker5y,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 10년 중고 탱커선 가격
+    const tanker10y = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Tanker') && row.textContent.includes('10 year'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "10년 중고 탱커선 가격",
+      value: tanker10y,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    logger.info(`중고선 가격 데이터 수집 완료: ${results.length}개`);
+    return results;
+  } catch (error) {
+    logger.error(`중고선 가격 데이터 수집 중 오류: ${error.message}`);
+    return [];
+  }
+}
+
+// Puppeteer로 정기용선료 데이터 수집 함수
+async function scrapeTimecharter(page, source) {
+  let results = [];
+  try {
+    logger.info('정기용선료 데이터 수집 중...');
+    
+    // URL 접속
+    await page.goto(source.url, { waitUntil: 'networkidle2', timeout: 60000 });
+    
+    // 로그인이 필요한 경우 처리
+    const loginForm = await page.$('input[type="password"]');
+    if (loginForm) {
+      // 클락슨 계정 로그인
+      await page.type('#username', process.env.CLARKSONS_USERNAME || 'demo_user');
+      await page.type('#password', process.env.CLARKSONS_PASSWORD || 'demo_pass');
+      await Promise.all([
+        page.click('button[type="submit"]'),
+        page.waitForNavigation({ waitUntil: 'networkidle2' })
+      ]);
+    }
+    
+    // 데이터 로딩 대기
+    await page.waitForSelector('.data-table', { timeout: 30000 });
+    
+    // 컨테이너선 용선료 (1700 TEU)
+    const container1700 = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Container') && row.textContent.includes('1700 TEU'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "컨테이너선 용선료 (1700 TEU)",
+      value: container1700,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 컨테이너선 용선료 (4400 TEU)
+    const container4400 = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Container') && row.textContent.includes('4400 TEU'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "컨테이너선 용선료 (4400 TEU)",
+      value: container4400,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 벌크선 용선료 (케이프사이즈)
+    const bulkCapesize = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Bulk') && row.textContent.includes('Capesize'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "벌크선 용선료 (케이프사이즈)",
+      value: bulkCapesize,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 벌크선 용선료 (파나막스)
+    const bulkPanamax = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Bulk') && row.textContent.includes('Panamax'));
+      return row ? row.querySelector('td:nth-child(2)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "벌크선 용선료 (파나막스)",
+      value: bulkPanamax,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    logger.info(`정기용선료 데이터 수집 완료: ${results.length}개`);
+    return results;
+  } catch (error) {
+    logger.error(`정기용선료 데이터 수집 중 오류: ${error.message}`);
+    return [];
+  }
+}
+
+// Puppeteer로 주요 항구별 운임 정보 수집 함수
+async function scrapePortFreightRates(page, source) {
+  let results = [];
+  try {
+    logger.info('주요 항구별 운임 정보 수집 중...');
+    
+    // URL 접속
+    await page.goto(source.url, { waitUntil: 'networkidle2', timeout: 60000 });
+    
+    // 데이터 로딩 대기 (프라이토스 인덱스 테이블)
+    await page.waitForSelector('.freight-index-table', { timeout: 30000 });
+    
+    // 상하이-로테르담 운임
+    const shanghaiRotterdam = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Shanghai') && row.textContent.includes('Rotterdam'));
+      return row ? row.querySelector('td:nth-child(3)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "상하이-로테르담 운임",
+      value: shanghaiRotterdam,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 상하이-로스앤젤레스 운임
+    const shanghaiLA = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Shanghai') && row.textContent.includes('Los Angeles'));
+      return row ? row.querySelector('td:nth-child(3)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "상하이-로스앤젤레스 운임",
+      value: shanghaiLA,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 상하이-뉴욕 운임
+    const shanghaiNY = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Shanghai') && row.textContent.includes('New York'));
+      return row ? row.querySelector('td:nth-child(3)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "상하이-뉴욕 운임",
+      value: shanghaiNY,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 부산-로테르담 운임
+    const busanRotterdam = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Busan') && row.textContent.includes('Rotterdam'));
+      return row ? row.querySelector('td:nth-child(3)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "부산-로테르담 운임",
+      value: busanRotterdam,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 부산-로스앤젤레스 운임
+    const busanLA = await page.evaluate(() => {
+      const row = Array.from(document.querySelectorAll('tr')).find(row => 
+        row.textContent.includes('Busan') && row.textContent.includes('Los Angeles'));
+      return row ? row.querySelector('td:nth-child(3)').textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "부산-로스앤젤레스 운임",
+      value: busanLA,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    logger.info(`주요 항구별 운임 정보 수집 완료: ${results.length}개`);
+    return results;
+  } catch (error) {
+    logger.error(`주요 항구별 운임 정보 수집 중 오류: ${error.message}`);
+    return [];
+  }
+}
+
+// Puppeteer로 주요 화물별 운임 정보 수집 함수
+async function scrapeCargoFreightRates(page, source) {
+  let results = [];
+  try {
+    logger.info('주요 화물별 운임 정보 수집 중...');
+    
+    // URL 접속
+    await page.goto(source.url, { waitUntil: 'networkidle2', timeout: 60000 });
+    
+    // 데이터 로딩 대기 (드루리 세계 컨테이너 지수 차트)
+    await page.waitForSelector('.drewry-container-index', { timeout: 30000 });
+    
+    // 컨테이너 화물 운임 - Drewry 세계 컨테이너 지수
+    const containerRate = await page.evaluate(() => {
+      const element = document.querySelector('.drewry-container-index .current-rate');
+      return element ? element.textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "컨테이너 화물 운임",
+      value: containerRate,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 냉동화물 운임
+    const reeferRate = await page.evaluate(() => {
+      const element = document.querySelector('.reefer-container-index .current-rate');
+      return element ? element.textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "냉동화물 운임",
+      value: reeferRate,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 건화물 운임
+    const dryRate = await page.evaluate(() => {
+      const element = document.querySelector('.dry-cargo-index .current-rate');
+      return element ? element.textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "건화물 운임",
+      value: dryRate,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 특수화물 운임
+    const specialRate = await page.evaluate(() => {
+      const element = document.querySelector('.special-cargo-index .current-rate');
+      return element ? element.textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "특수화물 운임",
+      value: specialRate,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    // 위험물 운임
+    const hazardousRate = await page.evaluate(() => {
+      const element = document.querySelector('.hazardous-cargo-index .current-rate');
+      return element ? element.textContent.trim() : 'N/A';
+    });
+    
+    results.push({
+      name: "위험물 운임",
+      value: hazardousRate,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    logger.info(`주요 화물별 운임 정보 수집 완료: ${results.length}개`);
+    return results;
+  } catch (error) {
+    logger.error(`주요 화물별 운임 정보 수집 중 오류: ${error.message}`);
+    return [];
+  }
+}
+
+// ===== 데이터 수집 및 처리 함수 =====
+
+// 모든 데이터 수집 함수
+async function collectAllData() {
+  logger.info('데이터 수집 시작...');
+  let allData = [];
+  let driver;
+  let browser;
+  let page;
+  
+  try {
+    // 셀레니움 드라이버 초기화
+    const options = new chrome.Options();
+    options.addArguments('--headless');
+    options.addArguments('--disable-gpu');
+    options.addArguments('--no-sandbox');
+    options.addArguments('--disable-dev-shm-usage');
+    
+    driver = await new Builder()
+      .forBrowser('chrome')
+      .setChromeOptions(options)
+      .build();
+    
+    // 퍼펫티어 브라우저 초기화
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+    
+    page = await browser.newPage();
+    await page.setViewport({ width: 1366, height: 768 });
+    
+    // 각 데이터 소스별 스크래핑
+    for (const source of dataSources) {
+      logger.info(`${source.name} 데이터 수집 시작...`);
+      let sourceData = [];
+      
+      // 소스별 스크래핑 방법 분기
+      if (source.method === 'selenium') {
+        if (source.name === 'Baltic Exchange') {
+          sourceData = await scrapeWithSelenium(source);
+        } else if (source.name === '나용선료 지수') {
+          sourceData = await scrapeBareBoatRates(driver, source);
+        }
+      } else if (source.method === 'puppeteer') {
+        if (source.name === '상하이 컨테이너 운임 지수') {
+          sourceData = await scrapeWithPuppeteer(source);
+        } else if (source.name === '벙커유 가격') {
+          sourceData = await scrapeWithPuppeteer(source);
+        } else if (source.name === '신조선 가격 지수') {
+          sourceData = await scrapeNewbuildPrices(page, source);
+        } else if (source.name === '중고선 가격 지수') {
+          sourceData = await scrapeSecondhandPrices(page, source);
+        } else if (source.name === '정기용선료 지수') {
+          sourceData = await scrapeTimecharter(page, source);
+        } else if (source.name === '주요 항구별 운임 정보') {
+          sourceData = await scrapePortFreightRates(page, source);
+        } else if (source.name === '주요 화물별 운임 정보') {
+          sourceData = await scrapeCargoFreightRates(page, source);
+        }
+      }
+      
+      allData = [...allData, ...sourceData];
+      logger.info(`${source.name} 데이터 수집 완료: ${sourceData.length}개`);
+    }
+    
+    // 모든 데이터 취합 및 저장
+    if (allData.length > 0) {
+      // 현재 날짜 기준 파일명 생성
+      const today = new Date().toISOString().split('T')[0];
+      const filename = path.join(dataDir, `shipping_data_${today}.json`);
+      
+      // 기존 데이터가 있으면 합치기
+      let existingData = [];
+      if (fs.existsSync(filename)) {
+        existingData = JSON.parse(fs.readFileSync(filename, 'utf8'));
+        
+        // 중복 제거 (같은 날짜, 같은 지수명 데이터)
+        const existingMap = new Map(existingData.map(item => [item.name, item]));
+        for (const item of allData) {
+          existingMap.set(item.name, item);
+        }
+        allData = Array.from(existingMap.values());
+      }
+      
+      // 데이터 저장
+      fs.writeFileSync(filename, JSON.stringify(allData, null, 2));
+      logger.info(`총 ${allData.length}개 데이터 저장 완료: ${filename}`);
+      
+      // 구독자들에게 이메일 발송
+      if (subscribedEmails.length > 0) {
+        await sendDataReport(allData, subscribedEmails);
+      }
+    } else {
+      logger.warn('수집된 데이터가 없습니다.');
+    }
+    
+    return allData;
+  } catch (error) {
+    logger.error(`데이터 수집 중 오류 발생: ${error.message}`);
+    return [];
+  } finally {
+    // 리소스 정리
+    if (driver) {
+      await driver.quit();
+    }
+    if (page) {
+      await page.close();
+    }
+    if (browser) {
+      await browser.close();
+    }
   }
 }
 
@@ -596,7 +1142,7 @@ app.post('/unsubscribe', (req, res) => {
 app.post('/collect', isAuthenticated, async (req, res) => {
   try {
     logger.info('수동 데이터 수집 시작...');
-    const result = await collectAllShippingData();
+    const result = await collectAllData();
     res.status(200).json({ 
       success: true, 
       message: '데이터 수집 완료', 
@@ -617,7 +1163,7 @@ app.post('/collect', isAuthenticated, async (req, res) => {
 app.get('/api/data', isAuthenticated, async (req, res) => {
   try {
     // 실제 데이터 수집 시도
-    const collectedData = await collectAllShippingData();
+    const collectedData = await collectAllData();
     
     // 수집된 데이터가 있으면 사용, 없으면 기본 데이터 사용
     if (collectedData && collectedData.length > 0) {
@@ -635,7 +1181,7 @@ app.get('/api/data', isAuthenticated, async (req, res) => {
 // 데이터 수집 트리거 API (GET /collect)
 app.get('/collect', isAuthenticated, async (req, res) => {
   try {
-    shippingData = await collectAllShippingData();
+    shippingData = await collectAllData();
     res.json({ message: '데이터 수집 완료', timestamp: new Date() });
   } catch (error) {
     logger.error('데이터 수집 중 오류:', error);
@@ -663,7 +1209,7 @@ app.get('/download', isAuthenticated, (req, res) => {
     
     if (csvFiles.length === 0) {
       // CSV 파일이 없으면 새로 생성
-      return collectAllShippingData().then(() => {
+      return collectAllData().then(() => {
         // 최신 CSV 파일 찾기
         const updatedFiles = fs.readdirSync(dataDir);
         const updatedCsvFiles = updatedFiles.filter(f => f.endsWith('.csv'));
@@ -713,7 +1259,7 @@ app.on('ready', () => {
     if (!isInitialDataCollected) {
       logger.info('서버 시작 후 초기 데이터 수집 시작...');
       try {
-        await collectAllShippingData();
+        await collectAllData();
         isInitialDataCollected = true;
         logger.info('초기 데이터 수집 완료');
       } catch (error) {
@@ -727,7 +1273,7 @@ app.on('ready', () => {
 cron.schedule('0 9,15 * * *', async () => {
   logger.info('정기 데이터 수집 시작 (예약된 작업)');
   try {
-    await collectAllShippingData();
+    await collectAllData();
     logger.info('정기 데이터 수집 완료');
   } catch (error) {
     logger.error(`정기 데이터 수집 실패: ${error.message}`);

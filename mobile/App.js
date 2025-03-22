@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  StyleSheet, Text, View, TextInput, Button, ActivityIndicator, FlatList, ScrollView, Alert, Dimensions 
+  StyleSheet, Text, View, TextInput, Button, ActivityIndicator, FlatList, ScrollView, Alert, Dimensions, TouchableOpacity 
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -14,10 +14,23 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [categories, setCategories] = useState([
+    { id: 'all', name: '전체' },
+    { id: 'baltic', name: 'Baltic 지수' },
+    { id: 'container', name: '컨테이너 지수' },
+    { id: 'bunker', name: '벙커유 가격' },
+    { id: 'newbuild', name: '신조선 가격' },
+    { id: 'secondhand', name: '중고선 가격' },
+    { id: 'charter', name: '정기용선료' },
+    { id: 'bareboat', name: '나용선료' },
+    { id: 'portfreight', name: '항구별 운임' },
+    { id: 'cargofreight', name: '화물별 운임' }
+  ]);
 
   // 백엔드 서버의 기본 URL (예시: 로컬 테스트 시 http://localhost:5000)
   // 실제 배포 시에는 고정 도메인 또는 ngrok URL 등으로 업데이트 하세요.
-  const BASE_URL = 'https://shipping-fovqk.run'; 
+  const BASE_URL = 'https://api.ship.wvl.co.kr';
   const API_DATA = `${BASE_URL}/api/data`;
   const API_LOGIN = `${BASE_URL}/login`;
   const API_LOGOUT = `${BASE_URL}/logout`;
@@ -138,6 +151,38 @@ export default function App() {
     ],
   };
 
+  // 카테고리별 데이터 필터링 함수
+  const filterDataByCategory = (data, category) => {
+    if (category === 'all') return data;
+    
+    return data.filter(item => {
+      const name = item.name || '';
+      if (category === 'baltic' && (name.includes('Baltic') || name.includes('BDI') || name.includes('BCI'))) {
+        return true;
+      } else if (category === 'container' && (name.includes('Container') || name.includes('컨테이너') || name.includes('SCFI'))) {
+        return true;
+      } else if (category === 'bunker' && (name.includes('벙커') || name.includes('bunker') || name.includes('VLSFO'))) {
+        return true;
+      } else if (category === 'newbuild' && (name.includes('신조선') || name.includes('Newbuild'))) {
+        return true;
+      } else if (category === 'secondhand' && (name.includes('중고선') || name.includes('Secondhand'))) {
+        return true;
+      } else if (category === 'charter' && (name.includes('용선료') || name.includes('Charter') || name.includes('TC'))) {
+        return true;
+      } else if (category === 'bareboat' && (name.includes('나용선') || name.includes('Bareboat') || name.includes('BB'))) {
+        return true;
+      } else if (category === 'portfreight' && ((name.includes('항구') || name.includes('Port')) && name.includes('운임'))) {
+        return true;
+      } else if (category === 'cargofreight' && ((name.includes('화물') || name.includes('Cargo')) && name.includes('운임'))) {
+        return true;
+      }
+      return false;
+    });
+  };
+
+  // 데이터 렌더링 로직 업데이트
+  const filteredData = filterDataByCategory(data, selectedCategory);
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Shipping Data</Text>
@@ -168,8 +213,31 @@ export default function App() {
             <Text style={styles.error}>Error: {error}</Text>
           ) : (
             <View>
+              <View style={styles.categoryContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {categories.map(category => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={[
+                        styles.categoryButton,
+                        selectedCategory === category.id && styles.categoryButtonActive
+                      ]}
+                      onPress={() => setSelectedCategory(category.id)}
+                    >
+                      <Text 
+                        style={[
+                          styles.categoryText,
+                          selectedCategory === category.id && styles.categoryTextActive
+                        ]}
+                      >
+                        {category.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
               <FlatList
-                data={data}
+                data={filteredData}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                   <View style={styles.row}>
@@ -269,5 +337,26 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
     marginVertical: 10,
+  },
+  categoryContainer: {
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  categoryButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+  },
+  categoryButtonActive: {
+    backgroundColor: '#000',
+  },
+  categoryText: {
+    fontSize: 16,
+  },
+  categoryTextActive: {
+    color: '#fff',
   },
 });

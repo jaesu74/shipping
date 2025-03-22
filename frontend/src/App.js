@@ -19,7 +19,11 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // 백엔드 서버 기본 URL (최신 주소로 업데이트)
-  const BASE_URL = 'http://localhost:5000';
+  // 개발 환경: const BASE_URL = 'http://localhost:5000';
+  // 프로덕션 환경: 
+  const BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000' 
+    : 'https://api.ship.wvl.co.kr';
   const API_DATA = `${BASE_URL}/api/data`;
   const API_LOGIN = `${BASE_URL}/login`;
   const API_LOGOUT = `${BASE_URL}/logout`;
@@ -134,7 +138,6 @@ function App() {
         // 데이터 카테고리 추출
         const categories = new Set();
         json.forEach(item => {
-          // 카테고리 구분 로직 (첫 단어 또는 특정 키워드 기준)
           const name = item["지수명"];
           if (name.includes('Baltic') || name.includes('BDI') || name.includes('BCI')) {
             categories.add('baltic');
@@ -144,6 +147,18 @@ function App() {
             categories.add('bunker');
           } else if (name.includes('Port') || name.includes('항만')) {
             categories.add('port');
+          } else if (name.includes('신조선') || name.includes('Newbuild')) {
+            categories.add('newbuild');
+          } else if (name.includes('중고선') || name.includes('Secondhand')) {
+            categories.add('secondhand');
+          } else if (name.includes('용선료') || name.includes('Charter') || name.includes('TC')) {
+            categories.add('charter');
+          } else if (name.includes('나용선') || name.includes('Bareboat') || name.includes('BB')) {
+            categories.add('bareboat');
+          } else if ((name.includes('항구') || name.includes('Port')) && name.includes('운임')) {
+            categories.add('portfreight');
+          } else if ((name.includes('화물') || name.includes('Cargo')) && name.includes('운임')) {
+            categories.add('cargofreight');
           } else {
             categories.add('other');
           }
@@ -199,7 +214,6 @@ function App() {
         // 데이터 카테고리 추출
         const categories = new Set();
         json.forEach(item => {
-          // 카테고리 구분 로직 (첫 단어 또는 특정 키워드 기준)
           const name = item["지수명"];
           if (name.includes('Baltic') || name.includes('BDI') || name.includes('BCI')) {
             categories.add('baltic');
@@ -209,6 +223,18 @@ function App() {
             categories.add('bunker');
           } else if (name.includes('Port') || name.includes('항만')) {
             categories.add('port');
+          } else if (name.includes('신조선') || name.includes('Newbuild')) {
+            categories.add('newbuild');
+          } else if (name.includes('중고선') || name.includes('Secondhand')) {
+            categories.add('secondhand');
+          } else if (name.includes('용선료') || name.includes('Charter') || name.includes('TC')) {
+            categories.add('charter');
+          } else if (name.includes('나용선') || name.includes('Bareboat') || name.includes('BB')) {
+            categories.add('bareboat');
+          } else if ((name.includes('항구') || name.includes('Port')) && name.includes('운임')) {
+            categories.add('portfreight');
+          } else if ((name.includes('화물') || name.includes('Cargo')) && name.includes('운임')) {
+            categories.add('cargofreight');
           } else {
             categories.add('other');
           }
@@ -399,19 +425,78 @@ function App() {
                   >
                     전체
                   </button>
-                  {sourceCategories.map(category => (
+                  {sourceCategories.includes('baltic') && (
                     <button 
-                      key={category}
-                      className={selectedCategory === category ? 'active' : ''}
-                      onClick={() => handleCategoryChange(category)}
+                      className={selectedCategory === 'baltic' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('baltic')}
                     >
-                      {category === 'baltic' && '발틱 지수'}
-                      {category === 'container' && '컨테이너 운임'}
-                      {category === 'bunker' && '벙커유 가격'}
-                      {category === 'port' && '항만 통계'}
-                      {category === 'other' && '기타 지수'}
+                      Baltic 지수
                     </button>
-                  ))}
+                  )}
+                  {sourceCategories.includes('container') && (
+                    <button 
+                      className={selectedCategory === 'container' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('container')}
+                    >
+                      컨테이너 지수
+                    </button>
+                  )}
+                  {sourceCategories.includes('bunker') && (
+                    <button 
+                      className={selectedCategory === 'bunker' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('bunker')}
+                    >
+                      벙커유 가격
+                    </button>
+                  )}
+                  {sourceCategories.includes('newbuild') && (
+                    <button 
+                      className={selectedCategory === 'newbuild' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('newbuild')}
+                    >
+                      신조선 가격
+                    </button>
+                  )}
+                  {sourceCategories.includes('secondhand') && (
+                    <button 
+                      className={selectedCategory === 'secondhand' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('secondhand')}
+                    >
+                      중고선 가격
+                    </button>
+                  )}
+                  {sourceCategories.includes('charter') && (
+                    <button 
+                      className={selectedCategory === 'charter' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('charter')}
+                    >
+                      정기용선료
+                    </button>
+                  )}
+                  {sourceCategories.includes('bareboat') && (
+                    <button 
+                      className={selectedCategory === 'bareboat' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('bareboat')}
+                    >
+                      나용선료
+                    </button>
+                  )}
+                  {sourceCategories.includes('portfreight') && (
+                    <button 
+                      className={selectedCategory === 'portfreight' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('portfreight')}
+                    >
+                      항구별 운임
+                    </button>
+                  )}
+                  {sourceCategories.includes('cargofreight') && (
+                    <button 
+                      className={selectedCategory === 'cargofreight' ? 'active' : ''} 
+                      onClick={() => handleCategoryChange('cargofreight')}
+                    >
+                      화물별 운임
+                    </button>
+                  )}
                 </div>
               )}
               
