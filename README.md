@@ -68,3 +68,86 @@ npm start
 
 ## 라이선스
 ISC License 
+
+## 도메인 연결 및 배포 방법
+
+### 프론트엔드 배포 (GitHub Pages)
+
+1. 프론트엔드 디렉토리로 이동하여 gh-pages 패키지 설치
+```bash
+cd frontend
+npm install gh-pages --save-dev
+```
+
+2. package.json에 homepage 필드와 deploy 스크립트 확인
+```json
+"homepage": "https://ship.wvl.co.kr",
+"scripts": {
+  "predeploy": "npm run build",
+  "deploy": "gh-pages -d build"
+}
+```
+
+3. GitHub Pages 배포 실행
+```bash
+npm run deploy
+```
+
+4. GitHub 저장소 설정에서 Pages 설정 확인
+   - Settings > Pages > Source에서 gh-pages 브랜치 선택
+   - Custom domain에 ship.wvl.co.kr 입력
+
+### 백엔드 서버 배포 (Linux/Ubuntu 서버)
+
+1. PM2를 글로벌로 설치
+```bash
+npm install pm2 -g
+```
+
+2. 백엔드 코드 복제 및 의존성 설치
+```bash
+git clone https://github.com/jaesu74/shipping.git
+cd shipping/backend
+npm install
+```
+
+3. PM2로 서버 실행
+```bash
+pm2 start ecosystem.config.js --env production
+```
+
+4. Nginx 설정 (도메인 연결)
+```
+server {
+    listen 80;
+    server_name api.ship.wvl.co.kr;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+5. Let's Encrypt로 SSL 인증서 발급
+```bash
+sudo certbot --nginx -d api.ship.wvl.co.kr
+```
+
+### DNS 설정 (도메인 공급자 웹사이트)
+
+1. `ship.wvl.co.kr` DNS 레코드 추가
+   - CNAME 레코드: `ship` → `jaesu74.github.io`
+
+2. `api.ship.wvl.co.kr` DNS 레코드 추가
+   - A 레코드: `api.ship` → 백엔드 서버 IP 주소
+
+### 도메인 확인
+
+설정이 완료되면 다음 주소로 접속 가능:
+- 프론트엔드: https://ship.wvl.co.kr
+- 백엔드 API: https://api.ship.wvl.co.kr 
