@@ -151,3 +151,43 @@ sudo certbot --nginx -d api.ship.wvl.co.kr
 설정이 완료되면 다음 주소로 접속 가능:
 - 프론트엔드: https://ship.wvl.co.kr
 - 백엔드 API: https://api.ship.wvl.co.kr 
+
+## 배포 방법 (Google Cloud Platform)
+
+### 필요한 설정
+
+1. Google Cloud Platform 서비스 계정 생성
+   - GCP 콘솔에서 IAM & Admin > Service Accounts로 이동
+   - 새 서비스 계정 생성 (App Engine Admin과 Cloud Build 권한 필요)
+   - 키 생성 (JSON 형식)
+
+2. GitHub Secrets 설정
+   - GitHub 레포지토리의 Settings > Secrets and variables > Actions로 이동
+   - 다음 Secrets 추가:
+     - `GCP_PROJECT_ID`: Google Cloud 프로젝트 ID (예: "SHIPPING")
+     - `GCP_SA_KEY`: 서비스 계정 키 전체 내용 (JSON 파일 내용)
+
+### 배포 프로세스
+
+1. 코드 변경 후 메인 브랜치에 Push
+```bash
+git add .
+git commit -m "업데이트 내용"
+git push origin main
+```
+
+2. GitHub Actions에서 자동으로 GCP App Engine에 배포
+   - GitHub 레포지토리의 Actions 탭에서 진행 상황 확인 가능
+
+### 수동 배포 (필요한 경우)
+
+```bash
+# 서비스 계정 인증 (최초 1회)
+gcloud auth activate-service-account --key-file=[키파일경로].json
+
+# 프로젝트 설정
+gcloud config set project SHIPPING
+
+# 앱 배포
+gcloud app deploy
+``` 

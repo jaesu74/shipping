@@ -18,12 +18,9 @@ function App() {
   const [sourceCategories, setSourceCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // 백엔드 서버 기본 URL (최신 주소로 업데이트)
-  // 개발 환경: const BASE_URL = 'http://localhost:5000';
-  // 프로덕션 환경: 
-  const BASE_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5000' 
-    : 'https://api.ship.wvl.co.kr';
+  // 백엔드 서버 URL
+  const BASE_URL = 'https://api.ship.wvl.co.kr';
+  // const BASE_URL = 'http://localhost:5000'; // 로컬 개발 시 사용
   const API_DATA = `${BASE_URL}/api/data`;
   const API_LOGIN = `${BASE_URL}/login`;
   const API_LOGOUT = `${BASE_URL}/logout`;
