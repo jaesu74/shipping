@@ -43,11 +43,10 @@ jobs:
         gcloud config list
         gcloud auth list
 
-    - name: Enable required APIs
-      run: |
-        gcloud services enable appengine.googleapis.com --project=${{ env.PROJECT_ID }}
-        gcloud services enable cloudbuild.googleapis.com --project=${{ env.PROJECT_ID }}
-        gcloud services enable cloudresourcemanager.googleapis.com --project=${{ env.PROJECT_ID }}
+    # 참고: 다음 API를 Google Cloud Console에서 수동으로 활성화해야 합니다:
+    # - App Engine API (appengine.googleapis.com)
+    # - Cloud Build API (cloudbuild.googleapis.com)
+    # - Cloud Resource Manager API (cloudresourcemanager.googleapis.com)
 
     - name: Create App Engine application
       run: |
