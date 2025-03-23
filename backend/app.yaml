@@ -5,6 +5,8 @@ service: backend-api
 env_variables:
   PORT: 8080
 
+entrypoint: node server.js
+
 handlers:
 - url: /.*
   script: auto
