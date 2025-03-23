@@ -43,23 +43,15 @@ jobs:
         gcloud config list
         gcloud auth list
 
-    # 참고: 다음 API를 Google Cloud Console에서 수동으로 활성화해야 합니다:
-    # - App Engine API (appengine.googleapis.com)
-    # - Cloud Build API (cloudbuild.googleapis.com)
-    # - Cloud Resource Manager API (cloudresourcemanager.googleapis.com)
-
-    - name: Create App Engine application
-      run: |
-        # App Engine 애플리케이션이 존재하는지 확인
-        APP_EXISTS=$(gcloud app describe --project=${{ env.PROJECT_ID }} 2>&1 | grep "serving:" || echo "")
-        
-        if [ -z "$APP_EXISTS" ]; then
-          echo "Creating App Engine application in asia-northeast3 (Seoul) region"
-          # 사용 가능한 리전: https://cloud.google.com/appengine/docs/locations
-          gcloud app create --region=asia-northeast3 --project=${{ env.PROJECT_ID }}
-        else
-          echo "App Engine application already exists"
-        fi
+    # 참고: 다음 작업을 Google Cloud Console에서 수동으로 완료해야 합니다:
+    # 1. 필요한 API 활성화:
+    #    - App Engine API (appengine.googleapis.com)
+    #    - Cloud Build API (cloudbuild.googleapis.com)
+    #    - Cloud Resource Manager API (cloudresourcemanager.googleapis.com)
+    # 2. App Engine 애플리케이션 생성:
+    #    - App Engine 메뉴에서 "앱 만들기" 선택
+    #    - 리전으로 "asia-northeast3" (서울) 선택
+    #    - 안내에 따라 진행
 
     - name: Create app.yaml configuration
       run: |
