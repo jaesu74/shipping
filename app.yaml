@@ -1,10 +1,27 @@
 runtime: nodejs18
 
-service: backend-api
-
 env_variables:
   PORT: 8080
+  NODE_ENV: production
 
+# 성능 및 스케일링 설정
+automatic_scaling:
+  min_instances: 1
+  max_instances: 3
+
+# 헬스 체크 설정
+liveness_check:
+  path: "/api/status"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+# 정적 파일 핸들러 및 라우팅
 handlers:
-- url: /.*
+- url: /
+  static_files: public/index.html
+  upload: public/index.html
+
+- url: /(.*)
   script: auto 

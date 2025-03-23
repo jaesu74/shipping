@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>해운 데이터 서비스</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #0066cc;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        
+        header nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        header nav ul li {
+            margin-left: 20px;
+        }
+        
+        header nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        header nav ul li a:hover {
+            text-decoration: underline;
+        }
+        
+        main {
+            padding: 20px 0;
+        }
+        
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            color: #0066cc;
+        }
+        
+        .status-card {
+            display: flex;
+            align-items: center;
+            background-color: #e6f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .status-card .status-indicator {
+            width: 12px;
+            height: 12px;
+            background-color: #00cc66;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .indices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .index-item {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .index-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .index-item h3 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+        
+        .index-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #0066cc;
+        }
+        
+        .index-change {
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .positive {
+            background-color: #e6ffee;
+            color: #00cc66;
+        }
+        
+        .negative {
+            background-color: #ffe6e6;
+            color: #ff4d4d;
+        }
+        
+        .index-source {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .data-date {
+            text-align: right;
+            font-style: italic;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+        
+        footer .container {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        footer p {
+            margin: 0;
+        }
+        
+        .error-message {
+            background-color: #ffe6e6;
+            border-left: 4px solid #ff4d4d;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #c00;
+        }
+        
+        @media (max-width: 768px) {
+            header .container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            header nav ul {
+                margin-top: 15px;
+                justify-content: center;
+            }
+            
+            header nav ul li {
+                margin: 0 10px;
+            }
+            
+            .indices-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            footer .container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            footer .container p + p {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>해운 데이터 서비스</h1>
+            <nav>
+                <ul>
+                    <li><a href="/">홈</a></li>
+                    <li><a href="/api/indices" target="_blank">API</a></li>
+                    <li><a href="/api/status" target="_blank">상태</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <main>
+        <div class="container">
+            <div class="status-card">
+                <div class="status-indicator"></div>
+                <div>
+                    <strong>상태:</strong> 서버가 정상적으로 실행 중입니다
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>실시간 해운 지수</h2>
+                <p>최신 해운 지수 데이터를 확인하세요. 이 데이터는 매일 업데이트됩니다.</p>
+                
+                <div id="loading" class="loading">
+                    데이터를 불러오는 중...
+                </div>
+                
+                <div id="error-message" class="error-message" style="display: none;"></div>
+                
+                <div id="indices-container" style="display: none;">
+                    <div class="data-date">업데이트: <span id="data-date"></span></div>
+                    <div class="indices-grid" id="indices-grid"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 해운 데이터 서비스</p>
+            <p>데이터 출처: Baltic Exchange, Shanghai Shipping Exchange</p>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 데이터 로딩
+            fetchIndicesData();
+            
+            // 상태 확인
+            checkServerStatus();
+        });
+        
+        async function fetchIndicesData() {
+            try {
+                const response = await fetch('/api/indices');
+                
+                if (!response.ok) {
+                    throw new Error('데이터를 불러올 수 없습니다.');
+                }
+                
+                const data = await response.json();
+                
+                // 로딩 숨기기
+                document.getElementById('loading').style.display = 'none';
+                
+                // 데이터가 있는 경우
+                if (data && data.length > 0) {
+                    // 최신 데이터 가져오기 (날짜 기준 정렬)
+                    const sortedData = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    const latestData = sortedData[0];
+                    
+                    // 날짜 표시
+                    const dateElement = document.getElementById('data-date');
+                    const formattedDate = formatDate(latestData.date);
+                    dateElement.textContent = formattedDate;
+                    
+                    // 인덱스 표시
+                    const indicesGrid = document.getElementById('indices-grid');
+                    indicesGrid.innerHTML = '';
+                    
+                    latestData.indices.forEach(index => {
+                        const isPositive = index.change.startsWith('+');
+                        const changeClass = isPositive ? 'positive' : 'negative';
+                        
+                        const indexElement = document.createElement('div');
+                        indexElement.className = 'index-item';
+                        indexElement.innerHTML = `
+                            <h3>${index.name}</h3>
+                            <div class="index-value">${index.value}</div>
+                            <div class="index-change ${changeClass}">${index.change}</div>
+                            <div class="index-source">출처: ${index.source}</div>
+                        `;
+                        
+                        indicesGrid.appendChild(indexElement);
+                    });
+                    
+                    // 컨테이너 표시
+                    document.getElementById('indices-container').style.display = 'block';
+                } else {
+                    showError('사용 가능한 데이터가 없습니다.');
+                }
+            } catch (error) {
+                console.error('데이터 로딩 오류:', error);
+                showError('데이터를 불러오는 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.');
+            }
+        }
+        
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                if (data.status === 'online') {
+                    // 서버가 온라인 상태
+                    document.querySelector('.status-indicator').style.backgroundColor = '#00cc66';
+                } else {
+                    // 서버 상태 불확실
+                    document.querySelector('.status-indicator').style.backgroundColor = '#ffcc00';
+                }
+            } catch (error) {
+                // 서버 오프라인
+                document.querySelector('.status-indicator').style.backgroundColor = '#ff4d4d';
+                document.querySelector('.status-card div').innerHTML = '<strong>상태:</strong> 서버 연결에 문제가 있습니다';
+            }
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}년 ${month}월 ${day}일`;
+        }
+    </script>
+</body>
+</html> 
