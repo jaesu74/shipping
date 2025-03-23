@@ -20,128 +20,147 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Prepare backend files
+    - name: Create backend files
       run: |
-        cd backend
+        mkdir -p backend/public
         
-        # package.json 간소화
-        cat > package.json << EOF
-{
-  "name": "backend",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "body-parser": "^1.20.2"
-  },
-  "engines": {
-    "node": ">=18"
-  }
-}
-EOF
+        # 패키지 파일 생성
+        cat > backend/package.json << 'EOF'
+        {
+          "name": "backend",
+          "version": "1.0.0",
+          "main": "server.js",
+          "scripts": {
+            "start": "node server.js"
+          },
+          "dependencies": {
+            "express": "^4.18.2",
+            "cors": "^2.8.5",
+            "body-parser": "^1.20.2"
+          },
+          "engines": {
+            "node": ">=18"
+          }
+        }
+        EOF
         
-        # public 디렉토리가 존재하는지 확인하고, 없으면 생성
-        if [ ! -d "public" ]; then
-          mkdir -p public
-        fi
+        # HTML 파일 생성
+        cat > backend/public/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>해운 데이터 서비스</title>
+            <style>
+                body { font-family: Arial; margin: 20px; }
+                h1 { color: #0066cc; }
+                .status { background: #e6f7ff; border-left: 4px solid #0066cc; padding: 10px; }
+            </style>
+        </head>
+        <body>
+            <h1>해운 데이터 백엔드 서버</h1>
+            <div class="status">
+                <p><strong>상태:</strong> 실행 중</p>
+                <p>이 페이지가 보이면 백엔드 서버가 정상적으로 작동하고 있습니다.</p>
+            </div>
+            <h2>API 엔드포인트</h2>
+            <ul>
+                <li><code>/</code> - 서버 상태 확인</li>
+                <li><code>/api/status</code> - API 상태 확인</li>
+                <li><code>/api/indices</code> - 해운 지수 데이터</li>
+            </ul>
+            <p><small>© 2024 SHIPPING Project</small></p>
+        </body>
+        </html>
+        EOF
         
-        # 간단한 index.html 파일 생성
-        cat > public/index.html << EOF
-<!DOCTYPE html>
-<html>
-<head>
-    <title>해운 데이터 서비스</title>
-    <style>
-        body { font-family: Arial; margin: 20px; }
-        h1 { color: #0066cc; }
-        .status { background: #e6f7ff; border-left: 4px solid #0066cc; padding: 10px; }
-    </style>
-</head>
-<body>
-    <h1>해운 데이터 백엔드 서버</h1>
-    <div class="status">
-        <p><strong>상태:</strong> 실행 중</p>
-        <p>이 페이지가 보이면 백엔드 서버가 정상적으로 작동하고 있습니다.</p>
-    </div>
-    <h2>API 엔드포인트</h2>
-    <ul>
-        <li><code>/</code> - 서버 상태 확인</li>
-        <li><code>/api/status</code> - API 상태 확인</li>
-        <li><code>/api/indices</code> - 해운 지수 데이터</li>
-    </ul>
-    <p><small>© 2024 SHIPPING Project</small></p>
-</body>
-</html>
-EOF
+        # 서버 파일 생성
+        cat > backend/server.js << 'EOF'
+        // 간단한 Express 서버 - App Engine 배포용
+        const express = require("express");
+        const cors = require("cors");
+        const path = require("path");
+
+        const app = express();
+        const PORT = process.env.PORT || 8080;
+
+        // 미들웨어
+        app.use(cors());
+        app.use(express.json());
+        app.use(express.static(path.join(__dirname, "public")));
+
+        // 루트 경로
+        app.get("/", (req, res) => {
+          res.sendFile(path.join(__dirname, "public", "index.html"));
+        });
+
+        // API 상태 확인
+        app.get("/api/status", (req, res) => {
+          res.json({ status: "online", message: "Backend server is running." });
+        });
+
+        // 기본 데이터 응답
+        app.get("/api/indices", (req, res) => {
+          res.json([{
+            date: new Date().toISOString().split("T")[0],
+            indices: [
+              {
+                name: "BDI (Baltic Dry Index)",
+                value: "1,432",
+                change: "+15",
+                source: "Baltic Exchange"
+              }
+            ]
+          }]);
+        });
+
+        // 에러 핸들링
+        app.use((err, req, res, next) => {
+          console.error("Server Error:", err);
+          res.status(500).json({ error: "Internal Server Error", message: err.message });
+        });
+
+        // 서버 시작
+        app.listen(PORT, () => {
+          console.log("Server running on port " + PORT);
+        });
+        EOF
         
-        # 매우 간단한 server.js 파일 생성 - 기존 파일 덮어쓰기
-        cat > server.js << EOF
-// 간단한 Express 서버 - App Engine 배포용
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+        # app.yaml 파일 생성
+        cat > backend/app.yaml << 'EOF'
+        runtime: nodejs18
+        env_variables:
+          PORT: 8080
+          NODE_ENV: production
+        entrypoint: node server.js
 
-const app = express();
-const PORT = process.env.PORT || 8080;
+        # Health check configuration
+        liveness_check:
+          path: "/api/status"
+          check_interval_sec: 30
+          timeout_sec: 4
+          failure_threshold: 2
+          success_threshold: 2
 
-// 미들웨어
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+        # Automatic scaling configuration
+        automatic_scaling:
+          max_instances: 3
+          min_instances: 1
+          target_cpu_utilization: 0.65
 
-// 루트 경로
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// API 상태 확인
-app.get('/api/status', (req, res) => {
-  res.json({ status: 'online', message: 'Backend server is running.' });
-});
-
-// 기본 데이터 응답
-app.get('/api/indices', (req, res) => {
-  res.json([{
-    date: new Date().toISOString().split('T')[0],
-    indices: [
-      {
-        name: "BDI (Baltic Dry Index)",
-        value: "1,432",
-        change: "+15",
-        source: "Baltic Exchange"
-      }
-    ]
-  }]);
-});
-
-// 에러 핸들링
-app.use((err, req, res, next) => {
-  console.error('Server Error:', err);
-  res.status(500).json({ error: 'Internal Server Error', message: err.message });
-});
-
-// 서버 시작
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
-EOF
-        
-        # 필요한 종속성만 설치
-        npm install express cors body-parser
+        # 정적 파일 핸들러
+        handlers:
+        - url: /.*
+          script: auto
+        EOF
         
         # 파일 확인
-        echo "Listing directory contents to verify files:"
+        cd backend
         ls -la
-        echo "Listing public directory contents:"
         ls -la public/
-        echo "server.js content:"
-        cat server.js
-        echo "package.json content:"
-        cat package.json
+        
+        # 종속성 설치
+        cd backend
+        npm install express cors body-parser
 
     - name: Authenticate to Google Cloud
       id: auth
@@ -173,43 +192,8 @@ EOF
     #    - 리전으로 "asia-northeast3" (서울) 선택
     #    - 안내에 따라 진행
 
-    - name: Create app.yaml configuration
-      run: |
-        cd backend
-        # app.yaml 파일 생성 - 매우 간단하게 유지
-        cat > app.yaml << EOF
-runtime: nodejs18
-env_variables:
-  PORT: 8080
-  NODE_ENV: production
-entrypoint: node server.js
-
-# Health check configuration
-liveness_check:
-  path: "/api/status"
-  check_interval_sec: 30
-  timeout_sec: 4
-  failure_threshold: 2
-  success_threshold: 2
-
-# Automatic scaling configuration
-automatic_scaling:
-  max_instances: 3
-  min_instances: 1
-  target_cpu_utilization: 0.65
-
-# 정적 파일 핸들러
-handlers:
-- url: /.*
-  script: auto
-EOF
-        
-        echo "app.yaml content:"
-        cat app.yaml
-
     - name: Deploy to App Engine
       id: deploy
       run: |
         cd backend
-        echo "Running gcloud app deploy"
-        gcloud app deploy --quiet --project=${{ env.PROJECT_ID }} --verbosity=debug 
+        gcloud app deploy --quiet --project=${{ env.PROJECT_ID }} 
