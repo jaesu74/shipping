@@ -20,87 +20,128 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Install dependencies
-      run: cd backend && npm install
-
     - name: Prepare backend files
       run: |
         cd backend
+        
+        # package.json 간소화
+        cat > package.json << EOF
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+EOF
+        
         # public 디렉토리가 존재하는지 확인하고, 없으면 생성
         if [ ! -d "public" ]; then
           mkdir -p public
         fi
         
         # 간단한 index.html 파일 생성
-        if [ ! -f "public/index.html" ]; then
-          echo '<!DOCTYPE html>' > public/index.html
-          echo '<html><head><title>해운 데이터 서비스</title></head>' >> public/index.html
-          echo '<body style="font-family:Arial; margin:20px;">' >> public/index.html
-          echo '<h1 style="color:#0066cc;">해운 데이터 백엔드 서버</h1>' >> public/index.html
-          echo '<div style="background:#e6f7ff; border-left:4px solid #0066cc; padding:10px;">' >> public/index.html
-          echo '<p><strong>상태:</strong> 실행 중</p>' >> public/index.html
-          echo '<p>이 페이지가 보이면 백엔드 서버가 정상적으로 작동하고 있습니다.</p>' >> public/index.html
-          echo '</div><h2>API 엔드포인트</h2><ul>' >> public/index.html
-          echo '<li><code>/</code> - 서버 상태 확인</li>' >> public/index.html
-          echo '<li><code>/api/status</code> - API 상태 확인</li>' >> public/index.html
-          echo '<li><code>/api/indices</code> - 해운 지수 데이터</li>' >> public/index.html
-          echo '</ul><p><small>© 2024 SHIPPING Project</small></p>' >> public/index.html
-          echo '</body></html>' >> public/index.html
-        fi
+        cat > public/index.html << EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>해운 데이터 서비스</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        h1 { color: #0066cc; }
+        .status { background: #e6f7ff; border-left: 4px solid #0066cc; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>해운 데이터 백엔드 서버</h1>
+    <div class="status">
+        <p><strong>상태:</strong> 실행 중</p>
+        <p>이 페이지가 보이면 백엔드 서버가 정상적으로 작동하고 있습니다.</p>
+    </div>
+    <h2>API 엔드포인트</h2>
+    <ul>
+        <li><code>/</code> - 서버 상태 확인</li>
+        <li><code>/api/status</code> - API 상태 확인</li>
+        <li><code>/api/indices</code> - 해운 지수 데이터</li>
+    </ul>
+    <p><small>© 2024 SHIPPING Project</small></p>
+</body>
+</html>
+EOF
         
-        # 간단한 server.js 파일 생성 (기존 파일이 있으면 덮어쓰지 않음)
-        if [ ! -f "server.js" ]; then
-          echo "Creating simple server.js file"
-          echo "const express = require('express');" > server.js
-          echo "const path = require('path');" >> server.js
-          echo "const app = express();" >> server.js
-          echo "const PORT = process.env.PORT || 8080;" >> server.js
-          echo "" >> server.js
-          echo "// 정적 파일 제공" >> server.js
-          echo "app.use(express.static(path.join(__dirname, 'public')));" >> server.js
-          echo "" >> server.js
-          echo "// 루트 경로" >> server.js
-          echo "app.get('/', (req, res) => {" >> server.js
-          echo "  res.sendFile(path.join(__dirname, 'public', 'index.html'));" >> server.js
-          echo "});" >> server.js
-          echo "" >> server.js
-          echo "// API 상태 확인" >> server.js
-          echo "app.get('/api/status', (req, res) => {" >> server.js
-          echo "  res.json({ status: 'online', message: 'Backend server is running.' });" >> server.js
-          echo "});" >> server.js
-          echo "" >> server.js
-          echo "// 기본 데이터 응답" >> server.js
-          echo "app.get('/api/indices', (req, res) => {" >> server.js
-          echo "  res.json([{" >> server.js
-          echo "    date: new Date().toISOString().split('T')[0]," >> server.js
-          echo "    indices: [" >> server.js
-          echo "      {" >> server.js
-          echo "        name: \"BDI (Baltic Dry Index)\"," >> server.js
-          echo "        value: \"1,432\"," >> server.js
-          echo "        change: \"+15\"," >> server.js
-          echo "        source: \"Baltic Exchange\"" >> server.js
-          echo "      }" >> server.js
-          echo "    ]" >> server.js
-          echo "  }]);" >> server.js
-          echo "});" >> server.js
-          echo "" >> server.js
-          echo "// 에러 핸들링" >> server.js
-          echo "app.use((err, req, res, next) => {" >> server.js
-          echo "  console.error('Server Error:', err);" >> server.js
-          echo "  res.status(500).json({ error: 'Internal Server Error', message: err.message });" >> server.js
-          echo "});" >> server.js
-          echo "" >> server.js
-          echo "// 서버 시작" >> server.js
-          echo "app.listen(PORT, () => {" >> server.js
-          echo "  console.log(\`Server running on port \${PORT}\`);" >> server.js
-          echo "});" >> server.js
-        fi
+        # 매우 간단한 server.js 파일 생성 - 기존 파일 덮어쓰기
+        cat > server.js << EOF
+// 간단한 Express 서버 - App Engine 배포용
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+// 미들웨어
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 루트 경로
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// API 상태 확인
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'online', message: 'Backend server is running.' });
+});
+
+// 기본 데이터 응답
+app.get('/api/indices', (req, res) => {
+  res.json([{
+    date: new Date().toISOString().split('T')[0],
+    indices: [
+      {
+        name: "BDI (Baltic Dry Index)",
+        value: "1,432",
+        change: "+15",
+        source: "Baltic Exchange"
+      }
+    ]
+  }]);
+});
+
+// 에러 핸들링
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  res.status(500).json({ error: 'Internal Server Error', message: err.message });
+});
+
+// 서버 시작
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});
+EOF
+        
+        # 필요한 종속성만 설치
+        npm install express cors body-parser
         
         # 파일 확인
         echo "Listing directory contents to verify files:"
         ls -la
         echo "Listing public directory contents:"
         ls -la public/
+        echo "server.js content:"
+        cat server.js
+        echo "package.json content:"
+        cat package.json
 
     - name: Authenticate to Google Cloud
       id: auth
@@ -135,53 +176,33 @@ jobs:
     - name: Create app.yaml configuration
       run: |
         cd backend
-        # app.yaml 파일 생성
-        echo 'runtime: nodejs18' > app.yaml
-        echo '# 첫 번째 배포는 반드시 default 서비스여야 합니다' >> app.yaml
-        echo '# service: backend-api' >> app.yaml
-        echo 'env_variables:' >> app.yaml
-        echo '  PORT: 8080' >> app.yaml
-        echo '  NODE_ENV: production' >> app.yaml
-        echo 'entrypoint: node server.js' >> app.yaml
-        echo '' >> app.yaml
-        echo '# Health check configuration' >> app.yaml
-        echo 'readiness_check:' >> app.yaml
-        echo '  path: "/api/status"' >> app.yaml
-        echo '  check_interval_sec: 5' >> app.yaml
-        echo '  timeout_sec: 4' >> app.yaml
-        echo '  failure_threshold: 2' >> app.yaml
-        echo '  success_threshold: 2' >> app.yaml
-        echo '  app_start_timeout_sec: 300' >> app.yaml
-        echo '' >> app.yaml
-        echo '# Liveness check configuration' >> app.yaml
-        echo 'liveness_check:' >> app.yaml
-        echo '  path: "/api/status"' >> app.yaml
-        echo '  check_interval_sec: 30' >> app.yaml
-        echo '  timeout_sec: 4' >> app.yaml
-        echo '  failure_threshold: 2' >> app.yaml
-        echo '  success_threshold: 2' >> app.yaml
-        echo '' >> app.yaml
-        echo '# Automatic scaling configuration' >> app.yaml
-        echo 'automatic_scaling:' >> app.yaml
-        echo '  max_instances: 5  # Maximum number of instances' >> app.yaml
-        echo '  min_instances: 1  # Minimum number of instances' >> app.yaml
-        echo '  target_cpu_utilization: 0.65' >> app.yaml
-        echo '  min_pending_latency: 30ms' >> app.yaml
-        echo '  max_pending_latency: 200ms' >> app.yaml
-        echo '' >> app.yaml
-        echo 'handlers:' >> app.yaml
-        echo '# 정적 파일 핸들러' >> app.yaml
-        echo '- url: /static' >> app.yaml
-        echo '  static_dir: public/static' >> app.yaml
-        echo '' >> app.yaml
-        echo '# 정적 파일 핸들러 (특정 파일)' >> app.yaml
-        echo '- url: /(.*\.(html|css|js|png|jpg|jpeg|gif|ico))' >> app.yaml
-        echo '  static_files: public/\1' >> app.yaml
-        echo '  upload: public/.*\.(html|css|js|png|jpg|jpeg|gif|ico)' >> app.yaml
-        echo '' >> app.yaml
-        echo '# 모든 요청은 서버로 전달' >> app.yaml
-        echo '- url: /.*' >> app.yaml
-        echo '  script: auto' >> app.yaml
+        # app.yaml 파일 생성 - 매우 간단하게 유지
+        cat > app.yaml << EOF
+runtime: nodejs18
+env_variables:
+  PORT: 8080
+  NODE_ENV: production
+entrypoint: node server.js
+
+# Health check configuration
+liveness_check:
+  path: "/api/status"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+# Automatic scaling configuration
+automatic_scaling:
+  max_instances: 3
+  min_instances: 1
+  target_cpu_utilization: 0.65
+
+# 정적 파일 핸들러
+handlers:
+- url: /.*
+  script: auto
+EOF
         
         echo "app.yaml content:"
         cat app.yaml
