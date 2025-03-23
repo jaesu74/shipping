@@ -60,7 +60,8 @@ jobs:
         echo "Creating app.yaml for deployment"
         cat > app.yaml << EOF
         runtime: nodejs18
-        service: backend-api
+        # 첫 번째 배포는 반드시 'default' 서비스여야 합니다
+        # service: backend-api
         env_variables:
           PORT: 8080
         entrypoint: node server.js
