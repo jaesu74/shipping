@@ -40,6 +40,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// 정적 파일 제공
+app.use(express.static(path.join(__dirname, 'public')));
+
 // 미들웨어 설정
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -53,6 +56,12 @@ app.use(session({
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir);
+}
+
+// public 디렉토리 설정
+const publicDir = path.join(__dirname, 'public');
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir);
 }
 
 // 수신자 이메일 목록 저장
@@ -96,7 +105,12 @@ let shippingData = [
 
 // 루트 라우트 (테스트용)
 app.get('/', (req, res) => {
-  res.send('Backend server is running.');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// API 상태 확인용 엔드포인트
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'online', message: 'Backend server is running.' });
 });
 
 // 간단한 사용자 인증 (데모용)
