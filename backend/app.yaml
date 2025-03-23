@@ -1,4 +1,7 @@
 ﻿runtime: nodejs18
+
+service: backend-api
+
 env_variables:
   PORT: 8080
 

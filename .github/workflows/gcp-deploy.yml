@@ -19,7 +19,7 @@ jobs:
         node-version: '18'
 
     - name: Install dependencies
-      run: npm install
+      run: cd backend && npm install
 
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v1
@@ -31,5 +31,5 @@ jobs:
       uses: google-github-actions/deploy-appengine@v1
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-        working_directory: ./  # 배포할 디렉토리 (backend만 배포하려면 ./backend)
+        working_directory: ./backend  # 백엔드 디렉토리로 변경
         version: v${{ github.run_number }} # 버전을 GitHub Actions 실행 번호로 설정 
