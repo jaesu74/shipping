@@ -31,59 +31,24 @@ jobs:
           mkdir -p public
         fi
         
-        # index.html 파일이 존재하는지 확인하고, 없으면 생성
+        # 간단한 index.html 파일 생성
         if [ ! -f "public/index.html" ]; then
-          cat > public/index.html << EOF
-          <!DOCTYPE html>
-          <html lang="ko">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>해운 데이터 서비스</title>
-              <style>
-                  body {
-                      font-family: 'Arial', sans-serif;
-                      line-height: 1.6;
-                      margin: 0;
-                      padding: 20px;
-                      color: #333;
-                      max-width: 800px;
-                      margin: 0 auto;
-                  }
-                  h1 {
-                      color: #0066cc;
-                      border-bottom: 2px solid #0066cc;
-                      padding-bottom: 10px;
-                  }
-                  .status {
-                      background-color: #e6f7ff;
-                      border-left: 4px solid #0066cc;
-                      padding: 10px 15px;
-                      margin: 20px 0;
-                  }
-              </style>
-          </head>
-          <body>
-              <h1>해운 데이터 백엔드 서버</h1>
-              <div class="status">
-                  <p><strong>상태:</strong> 실행 중</p>
-                  <p>이 페이지가 보이면 백엔드 서버가 정상적으로 작동하고 있습니다.</p>
-              </div>
-              
-              <h2>API 엔드포인트</h2>
-              <ul>
-                  <li><code>/</code> - 서버 상태 확인</li>
-                  <li><code>/api/status</code> - API 상태 확인</li>
-                  <li><code>/api/indices</code> - 해운 지수 데이터</li>
-              </ul>
-              
-              <p><small>© 2024 SHIPPING Project</small></p>
-          </body>
-          </html>
-          EOF
+          echo '<!DOCTYPE html>' > public/index.html
+          echo '<html><head><title>해운 데이터 서비스</title></head>' >> public/index.html
+          echo '<body style="font-family:Arial; margin:20px;">' >> public/index.html
+          echo '<h1 style="color:#0066cc;">해운 데이터 백엔드 서버</h1>' >> public/index.html
+          echo '<div style="background:#e6f7ff; border-left:4px solid #0066cc; padding:10px;">' >> public/index.html
+          echo '<p><strong>상태:</strong> 실행 중</p>' >> public/index.html
+          echo '<p>이 페이지가 보이면 백엔드 서버가 정상적으로 작동하고 있습니다.</p>' >> public/index.html
+          echo '</div><h2>API 엔드포인트</h2><ul>' >> public/index.html
+          echo '<li><code>/</code> - 서버 상태 확인</li>' >> public/index.html
+          echo '<li><code>/api/status</code> - API 상태 확인</li>' >> public/index.html
+          echo '<li><code>/api/indices</code> - 해운 지수 데이터</li>' >> public/index.html
+          echo '</ul><p><small>© 2024 SHIPPING Project</small></p>' >> public/index.html
+          echo '</body></html>' >> public/index.html
         fi
         
-        # app.yaml 파일에 정적 파일 핸들러 추가 확인
+        # 파일 확인
         echo "Listing directory contents to verify files:"
         ls -la
         echo "Listing public directory contents:"
@@ -122,35 +87,32 @@ jobs:
     - name: Create app.yaml configuration
       run: |
         cd backend
-        ls -la
-        echo "Creating app.yaml for deployment"
-        cat > app.yaml << EOF
-        runtime: nodejs18
-        # 첫 번째 배포는 반드시 'default' 서비스여야 합니다
-        # service: backend-api
-        env_variables:
-          PORT: 8080
-        entrypoint: node server.js
-        
-        # Automatic scaling configuration
-        automatic_scaling:
-          max_instances: 5  # Maximum number of instances
-          min_instances: 0  # Minimum number of instances
-          
-        handlers:
-        # 정적 파일 핸들러
-        - url: /static
-          static_dir: public/static
-          
-        # 정적 파일 핸들러 (특정 파일)
-        - url: /(.*\.(html|css|js|png|jpg|jpeg|gif|ico))
-          static_files: public/\1
-          upload: public/.*\.(html|css|js|png|jpg|jpeg|gif|ico)
-          
-        # 모든 요청은 서버로 전달
-        - url: /.*
-          script: auto
-        EOF
+        # app.yaml 파일 생성
+        echo 'runtime: nodejs18' > app.yaml
+        echo '# 첫 번째 배포는 반드시 default 서비스여야 합니다' >> app.yaml
+        echo '# service: backend-api' >> app.yaml
+        echo 'env_variables:' >> app.yaml
+        echo '  PORT: 8080' >> app.yaml
+        echo 'entrypoint: node server.js' >> app.yaml
+        echo '' >> app.yaml
+        echo '# Automatic scaling configuration' >> app.yaml
+        echo 'automatic_scaling:' >> app.yaml
+        echo '  max_instances: 5  # Maximum number of instances' >> app.yaml
+        echo '  min_instances: 0  # Minimum number of instances' >> app.yaml
+        echo '' >> app.yaml
+        echo 'handlers:' >> app.yaml
+        echo '# 정적 파일 핸들러' >> app.yaml
+        echo '- url: /static' >> app.yaml
+        echo '  static_dir: public/static' >> app.yaml
+        echo '' >> app.yaml
+        echo '# 정적 파일 핸들러 (특정 파일)' >> app.yaml
+        echo '- url: /(.*\.(html|css|js|png|jpg|jpeg|gif|ico))' >> app.yaml
+        echo '  static_files: public/\1' >> app.yaml
+        echo '  upload: public/.*\.(html|css|js|png|jpg|jpeg|gif|ico)' >> app.yaml
+        echo '' >> app.yaml
+        echo '# 모든 요청은 서버로 전달' >> app.yaml
+        echo '- url: /.*' >> app.yaml
+        echo '  script: auto' >> app.yaml
         
         echo "app.yaml content:"
         cat app.yaml
