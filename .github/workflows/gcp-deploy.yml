@@ -24,12 +24,17 @@ jobs:
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v1
       with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
 
     - name: Deploy to App Engine
       id: deploy
-      uses: google-github-actions/deploy-appengine@v1
-      with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        working_directory: ./backend  # 백엔드 디렉토리로 변경
-        version: v${{ github.run_number }} # 버전을 GitHub Actions 실행 번호로 설정 
+      run: |
+        cd backend
+        gcloud app deploy --quiet
+      env:
+        CLOUDSDK_CORE_PROJECT: ${{ secrets.GCP_PROJECT_ID }} 
