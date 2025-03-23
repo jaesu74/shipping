@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      PROJECT_ID: shipping
+      PROJECT_ID: fresh-edge-451807-h7  # 실제 GCP 프로젝트 ID
 
     steps:
     - name: Checkout code
@@ -29,6 +29,7 @@ jobs:
       with:
         credentials_json: ${{ secrets.GCP_SA_KEY }}
         project_id: ${{ env.PROJECT_ID }}
+        create_credentials_file: true
 
     - name: Setup gcloud CLI
       uses: google-github-actions/setup-gcloud@v1
@@ -70,4 +71,4 @@ jobs:
       run: |
         cd backend
         echo "Running gcloud app deploy"
-        echo "y" | gcloud app deploy --quiet 
+        echo "y" | gcloud app deploy --quiet --verbosity=debug 
