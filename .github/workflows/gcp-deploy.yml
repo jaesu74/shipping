@@ -48,6 +48,54 @@ jobs:
           echo '</body></html>' >> public/index.html
         fi
         
+        # 간단한 server.js 파일 생성 (기존 파일이 있으면 덮어쓰지 않음)
+        if [ ! -f "server.js" ]; then
+          echo "Creating simple server.js file"
+          echo "const express = require('express');" > server.js
+          echo "const path = require('path');" >> server.js
+          echo "const app = express();" >> server.js
+          echo "const PORT = process.env.PORT || 8080;" >> server.js
+          echo "" >> server.js
+          echo "// 정적 파일 제공" >> server.js
+          echo "app.use(express.static(path.join(__dirname, 'public')));" >> server.js
+          echo "" >> server.js
+          echo "// 루트 경로" >> server.js
+          echo "app.get('/', (req, res) => {" >> server.js
+          echo "  res.sendFile(path.join(__dirname, 'public', 'index.html'));" >> server.js
+          echo "});" >> server.js
+          echo "" >> server.js
+          echo "// API 상태 확인" >> server.js
+          echo "app.get('/api/status', (req, res) => {" >> server.js
+          echo "  res.json({ status: 'online', message: 'Backend server is running.' });" >> server.js
+          echo "});" >> server.js
+          echo "" >> server.js
+          echo "// 기본 데이터 응답" >> server.js
+          echo "app.get('/api/indices', (req, res) => {" >> server.js
+          echo "  res.json([{" >> server.js
+          echo "    date: new Date().toISOString().split('T')[0]," >> server.js
+          echo "    indices: [" >> server.js
+          echo "      {" >> server.js
+          echo "        name: \"BDI (Baltic Dry Index)\"," >> server.js
+          echo "        value: \"1,432\"," >> server.js
+          echo "        change: \"+15\"," >> server.js
+          echo "        source: \"Baltic Exchange\"" >> server.js
+          echo "      }" >> server.js
+          echo "    ]" >> server.js
+          echo "  }]);" >> server.js
+          echo "});" >> server.js
+          echo "" >> server.js
+          echo "// 에러 핸들링" >> server.js
+          echo "app.use((err, req, res, next) => {" >> server.js
+          echo "  console.error('Server Error:', err);" >> server.js
+          echo "  res.status(500).json({ error: 'Internal Server Error', message: err.message });" >> server.js
+          echo "});" >> server.js
+          echo "" >> server.js
+          echo "// 서버 시작" >> server.js
+          echo "app.listen(PORT, () => {" >> server.js
+          echo "  console.log(\`Server running on port \${PORT}\`);" >> server.js
+          echo "});" >> server.js
+        fi
+        
         # 파일 확인
         echo "Listing directory contents to verify files:"
         ls -la
@@ -93,12 +141,33 @@ jobs:
         echo '# service: backend-api' >> app.yaml
         echo 'env_variables:' >> app.yaml
         echo '  PORT: 8080' >> app.yaml
+        echo '  NODE_ENV: production' >> app.yaml
         echo 'entrypoint: node server.js' >> app.yaml
+        echo '' >> app.yaml
+        echo '# Health check configuration' >> app.yaml
+        echo 'readiness_check:' >> app.yaml
+        echo '  path: "/api/status"' >> app.yaml
+        echo '  check_interval_sec: 5' >> app.yaml
+        echo '  timeout_sec: 4' >> app.yaml
+        echo '  failure_threshold: 2' >> app.yaml
+        echo '  success_threshold: 2' >> app.yaml
+        echo '  app_start_timeout_sec: 300' >> app.yaml
+        echo '' >> app.yaml
+        echo '# Liveness check configuration' >> app.yaml
+        echo 'liveness_check:' >> app.yaml
+        echo '  path: "/api/status"' >> app.yaml
+        echo '  check_interval_sec: 30' >> app.yaml
+        echo '  timeout_sec: 4' >> app.yaml
+        echo '  failure_threshold: 2' >> app.yaml
+        echo '  success_threshold: 2' >> app.yaml
         echo '' >> app.yaml
         echo '# Automatic scaling configuration' >> app.yaml
         echo 'automatic_scaling:' >> app.yaml
         echo '  max_instances: 5  # Maximum number of instances' >> app.yaml
-        echo '  min_instances: 0  # Minimum number of instances' >> app.yaml
+        echo '  min_instances: 1  # Minimum number of instances' >> app.yaml
+        echo '  target_cpu_utilization: 0.65' >> app.yaml
+        echo '  min_pending_latency: 30ms' >> app.yaml
+        echo '  max_pending_latency: 200ms' >> app.yaml
         echo '' >> app.yaml
         echo 'handlers:' >> app.yaml
         echo '# 정적 파일 핸들러' >> app.yaml
