@@ -29,24 +29,43 @@ jobs:
       uses: google-github-actions/auth@v1
       with:
         credentials_json: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ env.PROJECT_ID }}
 
-    - name: Set up Cloud SDK
+    - name: Setup gcloud CLI
       uses: google-github-actions/setup-gcloud@v1
 
-    - name: Display gcloud info
+    - name: Verify gcloud configuration
       run: |
-        gcloud info
+        gcloud --version
         gcloud config list
+        gcloud auth list
 
-    - name: Create App Engine app if not exists
+    - name: Create app.yaml configuration
       run: |
-        gcloud app describe --project=${{ env.PROJECT_ID }} || gcloud app create --region=asia-northeast3 --project=${{ env.PROJECT_ID }}
-      continue-on-error: true
+        cd backend
+        ls -la
+        cat app.yaml
+        echo "Creating backup of app.yaml"
+        cp app.yaml app.yaml.bak
+        
+        echo "Updating app.yaml for deployment"
+        cat > app.yaml << EOF
+        runtime: nodejs18
+        service: backend-api
+        env_variables:
+          PORT: 8080
+        entrypoint: node server.js
+        handlers:
+        - url: /.*
+          script: auto
+        EOF
+        
+        echo "Updated app.yaml content:"
+        cat app.yaml
 
     - name: Deploy to App Engine
       id: deploy
       run: |
         cd backend
-        ls -la
-        cat app.yaml
-        echo "y" | gcloud app deploy --no-promote --verbosity=debug --project=${{ env.PROJECT_ID }} 
+        echo "Running gcloud app deploy"
+        echo "y" | gcloud app deploy --quiet --project=${{ env.PROJECT_ID }} 
