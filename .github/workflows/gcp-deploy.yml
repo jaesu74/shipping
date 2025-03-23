@@ -43,27 +43,48 @@ jobs:
         gcloud config list
         gcloud auth list
 
+    - name: Enable required APIs
+      run: |
+        gcloud services enable appengine.googleapis.com --project=${{ env.PROJECT_ID }}
+        gcloud services enable cloudbuild.googleapis.com --project=${{ env.PROJECT_ID }}
+        gcloud services enable cloudresourcemanager.googleapis.com --project=${{ env.PROJECT_ID }}
+
+    - name: Create App Engine application
+      run: |
+        # App Engine 애플리케이션이 존재하는지 확인
+        APP_EXISTS=$(gcloud app describe --project=${{ env.PROJECT_ID }} 2>&1 | grep "serving:" || echo "")
+        
+        if [ -z "$APP_EXISTS" ]; then
+          echo "Creating App Engine application in asia-northeast3 (Seoul) region"
+          # 사용 가능한 리전: https://cloud.google.com/appengine/docs/locations
+          gcloud app create --region=asia-northeast3 --project=${{ env.PROJECT_ID }}
+        else
+          echo "App Engine application already exists"
+        fi
+
     - name: Create app.yaml configuration
       run: |
         cd backend
         ls -la
-        cat app.yaml
-        echo "Creating backup of app.yaml"
-        cp app.yaml app.yaml.bak
-        
-        echo "Updating app.yaml for deployment"
+        echo "Creating app.yaml for deployment"
         cat > app.yaml << EOF
         runtime: nodejs18
         service: backend-api
         env_variables:
           PORT: 8080
         entrypoint: node server.js
+        
+        # Automatic scaling configuration
+        automatic_scaling:
+          max_instances: 5  # Maximum number of instances
+          min_instances: 0  # Minimum number of instances
+          
         handlers:
         - url: /.*
           script: auto
         EOF
         
-        echo "Updated app.yaml content:"
+        echo "app.yaml content:"
         cat app.yaml
 
     - name: Deploy to App Engine
@@ -71,4 +92,4 @@ jobs:
       run: |
         cd backend
         echo "Running gcloud app deploy"
-        echo "y" | gcloud app deploy --quiet --verbosity=debug 
+        gcloud app deploy --quiet --project=${{ env.PROJECT_ID }} --verbosity=debug 
