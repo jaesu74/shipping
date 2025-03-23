@@ -27,7 +27,9 @@ jobs:
         credentials_json: ${{ secrets.GCP_SA_KEY }}
 
     - name: Deploy to App Engine
+      id: deploy
       uses: google-github-actions/deploy-appengine@v1
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-        working_directory: ./  # 배포할 디렉토리 (backend만 배포하려면 ./backend) 
+        working_directory: ./  # 배포할 디렉토리 (backend만 배포하려면 ./backend)
+        version: v${{ github.run_number }} # 버전을 GitHub Actions 실행 번호로 설정 
