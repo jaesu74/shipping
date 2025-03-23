@@ -20,32 +20,57 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Create backend files
+    - name: Check directory structure
       run: |
-        mkdir -p backend/public
+        echo "현재 디렉토리 구조:"
+        ls -la
+        echo "public 디렉토리 내용:"
+        ls -la public/ || echo "Public 디렉토리를 찾을 수 없습니다"
+        echo "package.json 내용:"
+        cat package.json
+
+    - name: Prepare deployment files
+      run: |
+        # 기존 app.yaml 파일 백업
+        if [ -f "app.yaml" ]; then
+          cp app.yaml app.yaml.backup
+        fi
         
-        # 패키지 파일 생성
-        cat > backend/package.json << 'EOF'
-        {
-          "name": "backend",
-          "version": "1.0.0",
-          "main": "server.js",
-          "scripts": {
-            "start": "node server.js"
-          },
-          "dependencies": {
-            "express": "^4.18.2",
-            "cors": "^2.8.5",
-            "body-parser": "^1.20.2"
-          },
-          "engines": {
-            "node": ">=18"
-          }
-        }
+        # app.yaml 파일 생성/업데이트
+        cat > app.yaml << 'EOF'
+        runtime: nodejs18
+        env_variables:
+          PORT: 8080
+          NODE_ENV: production
+        entrypoint: node server.js
+
+        # Health check configuration
+        liveness_check:
+          path: "/api/status"
+          check_interval_sec: 30
+          timeout_sec: 4
+          failure_threshold: 2
+          success_threshold: 2
+
+        # Automatic scaling configuration
+        automatic_scaling:
+          max_instances: 3
+          min_instances: 1
+          target_cpu_utilization: 0.65
+
+        # 정적 파일 핸들러
+        handlers:
+        - url: /.*
+          script: auto
         EOF
         
+        # public/index.html 파일 백업 및 업데이트
+        if [ -f "public/index.html" ]; then
+          cp public/index.html public/index.html.backup
+        fi
+        
         # HTML 파일 생성
-        cat > backend/public/index.html << 'EOF'
+        cat > public/index.html << 'EOF'
         <!DOCTYPE html>
         <html>
         <head>
@@ -73,8 +98,13 @@ jobs:
         </html>
         EOF
         
+        # server.js 파일 백업 및 업데이트
+        if [ -f "server.js" ]; then
+          cp server.js server.js.backup
+        fi
+        
         # 서버 파일 생성
-        cat > backend/server.js << 'EOF'
+        cat > server.js << 'EOF'
         // 간단한 Express 서버 - App Engine 배포용
         const express = require("express");
         const cors = require("cors");
@@ -125,42 +155,14 @@ jobs:
         });
         EOF
         
-        # app.yaml 파일 생성
-        cat > backend/app.yaml << 'EOF'
-        runtime: nodejs18
-        env_variables:
-          PORT: 8080
-          NODE_ENV: production
-        entrypoint: node server.js
-
-        # Health check configuration
-        liveness_check:
-          path: "/api/status"
-          check_interval_sec: 30
-          timeout_sec: 4
-          failure_threshold: 2
-          success_threshold: 2
-
-        # Automatic scaling configuration
-        automatic_scaling:
-          max_instances: 3
-          min_instances: 1
-          target_cpu_utilization: 0.65
-
-        # 정적 파일 핸들러
-        handlers:
-        - url: /.*
-          script: auto
-        EOF
+        # 종속성 업데이트
+        npm install express cors body-parser
         
         # 파일 확인
-        cd backend
+        echo "수정 후 파일 목록:"
         ls -la
+        echo "public 디렉토리 내용:"
         ls -la public/
-        
-        # 종속성 설치
-        cd backend
-        npm install express cors body-parser
 
     - name: Authenticate to Google Cloud
       id: auth
@@ -195,5 +197,4 @@ jobs:
     - name: Deploy to App Engine
       id: deploy
       run: |
-        cd backend
         gcloud app deploy --quiet --project=${{ env.PROJECT_ID }} 
