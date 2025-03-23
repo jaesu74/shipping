@@ -30,8 +30,18 @@ jobs:
       with:
         credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Display gcloud info
+      run: |
+        gcloud info
+        gcloud config list
+
     - name: Deploy to App Engine
       id: deploy
       run: |
         cd backend
-        gcloud app deploy --quiet --project=${{ env.PROJECT_ID }} 
+        ls -la
+        cat app.yaml
+        gcloud app deploy --verbosity=debug --project=${{ env.PROJECT_ID }} 
