@@ -5,12 +5,11 @@ on:
     branches:
       - main  # 또는 master 등 메인 브랜치명
 
-env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: SHIPPING
 
     steps:
     - name: Checkout code
@@ -33,6 +32,9 @@ jobs:
 
     - name: Setup gcloud CLI
       uses: google-github-actions/setup-gcloud@v1
+
+    - name: Set project ID
+      run: gcloud config set project ${{ env.PROJECT_ID }}
 
     - name: Verify gcloud configuration
       run: |
@@ -68,4 +70,4 @@ jobs:
       run: |
         cd backend
         echo "Running gcloud app deploy"
-        echo "y" | gcloud app deploy --quiet --project=${{ env.PROJECT_ID }} 
+        echo "y" | gcloud app deploy --quiet 
