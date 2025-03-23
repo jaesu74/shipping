@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      PROJECT_ID: SHIPPING
+      PROJECT_ID: shipping
 
     steps:
     - name: Checkout code
