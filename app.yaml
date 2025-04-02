@@ -1,13 +1,16 @@
 runtime: nodejs18
 
 env_variables:
-  PORT: 8080
-  NODE_ENV: production
+  NODE_ENV: "production"
+  PORT: "8080"
+
+instance_class: F1
 
 # 성능 및 스케일링 설정
 automatic_scaling:
+  target_cpu_utilization: 0.65
   min_instances: 1
-  max_instances: 3
+  max_instances: 10
 
 # 헬스 체크 설정
 liveness_check:
@@ -19,9 +22,8 @@ liveness_check:
 
 # 정적 파일 핸들러 및 라우팅
 handlers:
-- url: /
-  static_files: public/index.html
-  upload: public/index.html
+- url: /.*
+  script: auto
+  secure: always
 
-- url: /(.*)
-  script: auto 
+env: flex 
