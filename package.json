@@ -1,12 +1,14 @@
 {
-  "name": "backend",
+  "name": "shipping-monitoring",
   "version": "1.0.0",
+  "description": "해운 데이터 수집 및 모니터링 시스템",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "deploy": "gcloud app deploy",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -14,23 +16,25 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "해운 데이터 수집 및 제공 서버",
   "dependencies": {
-    "axios": "^1.6.7",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.18.2",
-    "express-session": "^1.18.0",
     "node-cron": "^3.0.3",
-    "puppeteer": "^22.4.1",
+    "axios": "^1.6.7",
     "selenium-webdriver": "^4.18.1",
-    "winston": "^3.12.0",
-    "ws": "^8.16.0",
-    "pdf-parse": "^1.1.1",
-    "xlsx": "^0.18.5"
+    "puppeteer": "^22.0.0",
+    "winston": "^3.11.0",
+    "mongoose": "^8.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.0.3",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
+    "mongodb-memory-server": "^9.1.6"
   }
 } 
