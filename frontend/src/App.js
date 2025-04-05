@@ -15,10 +15,20 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import axios from 'axios';
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -27,6 +37,21 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import './App.css';
+
+// 모의 데이터 모듈 가져오기
+import {
+  MOCK_USERS,
+  MOCK_SHIPPING_INDICES,
+  MOCK_NEWBUILDING_PRICES,
+  MOCK_SECONDHAND_PRICES,
+  MOCK_BUNKER_PRICES,
+  MOCK_PORT_CONGESTION,
+  MOCK_TC_RATES_SHORT,
+  MOCK_TC_RATES_LONG,
+  MOCK_ROUTE_RATES,
+  MOCK_BDI_CHART_DATA,
+  MOCK_BUNKER_CHART_DATA
+} from './mockData';
 
 // axios 기본 설정 - 환경에 따라 동적으로 설정
 const isProduction = window.location.hostname !== 'localhost';
@@ -44,44 +69,50 @@ const theme = createTheme({
     secondary: {
       main: '#dc004e',
     },
+    background: {
+      default: '#f5f5f5',
+    },
+  },
+  typography: {
+    fontFamily: [
+      'Noto Sans KR',
+      'Roboto',
+      '"Helvetica Neue"',
+      'Arial',
+      'sans-serif'
+    ].join(','),
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.05)',
+          borderRadius: 8,
+        },
+      },
+    },
   },
 });
 
-// 모의 인증 데이터 (GitHub Pages 배포용)
-const MOCK_USERS = [
-  { username: 'admin', password: 'admin123', token: 'admin-mock-token' },
-  { username: 'user', password: 'user123', token: 'user-mock-token' }
-];
-
-// 모의 데이터
-const MOCK_SHIPPING_DATA = {
-  date: new Date().toISOString().split('T')[0],
-  indices: [
-    { name: "BDI (Baltic Dry Index)", value: "1,432", change: "+15", source: "Baltic Exchange" },
-    { name: "BCI (Baltic Capesize Index)", value: "1,876", change: "+23", source: "Baltic Exchange" },
-    { name: "BPI (Baltic Panamax Index)", value: "1,543", change: "+11", source: "Baltic Exchange" },
-    { name: "BSI (Baltic Supramax Index)", value: "1,107", change: "-5", source: "Baltic Exchange" },
-    { name: "SCFI 종합지수", value: "834.23", change: "-12.5", source: "상하이 컨테이너 운임 지수" },
-    { name: "글로벌 평균 VLSFO", value: "685.50", change: "-2.5", source: "벙커유 가격" },
-    { name: "컨테이너 운임 (FEU)", value: "$2,430", change: "+$120", source: "컨테이너 운임" },
-    { name: "부산항 혼잡도", value: "68%", change: "+2%", source: "항만 데이터" }
-  ]
-};
-
-// 차트용 모의 데이터
-const MOCK_CHART_DATA = [
-  { date: '2023-11-01', BDI: 1200 },
-  { date: '2023-11-08', BDI: 1250 },
-  { date: '2023-11-15', BDI: 1340 },
-  { date: '2023-11-22', BDI: 1380 },
-  { date: '2023-11-29', BDI: 1320 },
-  { date: '2023-12-06', BDI: 1410 },
-  { date: '2023-12-13', BDI: 1380 },
-  { date: '2023-12-20', BDI: 1432 },
-  { date: '2023-12-27', BDI: 1410 },
-  { date: '2024-01-03', BDI: 1367 },
-  { date: '2024-01-10', BDI: 1432 },
-];
+// 탭 패널 컴포넌트
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
 
 // 로그인 컴포넌트
 function Login({ onLogin }) {
@@ -108,6 +139,7 @@ function Login({ onLogin }) {
           console.log('모의 로그인 성공');
           localStorage.setItem('token', mockUser.token);
           localStorage.setItem('username', mockUser.username);
+          localStorage.setItem('role', mockUser.role);
           setTimeout(() => {
             setLoading(false);
             onLogin(mockUser.token);
@@ -127,6 +159,7 @@ function Login({ onLogin }) {
       console.log('로그인 응답:', response.data);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('username', username);
+      localStorage.setItem('role', response.data.role || 'user');
       setLoading(false);
       onLogin(response.data.token);
     } catch (err) {
@@ -218,15 +251,16 @@ function Login({ onLogin }) {
 // 헤더 컴포넌트
 function Header({ onLogout }) {
   const username = localStorage.getItem('username') || '사용자';
+  const role = localStorage.getItem('role') || 'user';
 
   return (
-    <AppBar position="static" sx={{ mb: 4 }}>
+    <AppBar position="static" sx={{ mb: 2 }}>
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           해운 데이터 모니터링 시스템
         </Typography>
         <Typography variant="body2" sx={{ mr: 2 }}>
-          {username}님 환영합니다
+          {username}님 ({role === 'admin' ? '관리자' : '일반사용자'})
         </Typography>
         <IconButton color="inherit" onClick={onLogout} title="로그아웃">
           <ExitToAppIcon />
@@ -236,86 +270,286 @@ function Header({ onLogout }) {
   );
 }
 
+// 대시보드 지수 표시용 컴포넌트
+function IndexCard({ index }) {
+  return (
+    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        {index.name}
+      </Typography>
+      <Typography variant="h5" component="div" sx={{ mb: 1, fontWeight: 'bold' }}>
+        {index.value}
+      </Typography>
+      <Typography 
+        color={index.change && index.change.startsWith('+') ? 'success.main' : 'error.main'}
+        variant="subtitle1"
+        sx={{ fontWeight: 'medium' }}
+      >
+        {index.change || "0"}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 'auto' }}>
+        {index.source || "데이터 소스"}
+      </Typography>
+    </Paper>
+  );
+}
+
+// 데이터 테이블 컴포넌트
+function DataTable({ data, columns }) {
+  return (
+    <TableContainer component={Paper} sx={{ mb: 4 }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+            {columns.map((column, index) => (
+              <TableCell key={index} sx={{ fontWeight: 'bold' }}>
+                {column.label}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.map((row, rowIndex) => (
+            <TableRow key={rowIndex} hover>
+              {columns.map((column, colIndex) => (
+                <TableCell key={colIndex}>
+                  {column.key === 'change' && row[column.key] ? (
+                    <Typography 
+                      color={row[column.key].startsWith('+') ? 'success.main' : 'error.main'}
+                      variant="body2"
+                    >
+                      {row[column.key]}
+                    </Typography>
+                  ) : (
+                    row[column.key]
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
+// 선박 건조 가격 컴포넌트
+function NewbuildingPrices() {
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>선박 건조 가격</Typography>
+      <DataTable 
+        data={MOCK_NEWBUILDING_PRICES}
+        columns={[
+          { key: 'type', label: '선종' },
+          { key: 'size', label: '크기' },
+          { key: 'price', label: '가격' },
+          { key: 'change', label: '변동' },
+          { key: 'shipyard', label: '건조 지역' }
+        ]}
+      />
+    </Box>
+  );
+}
+
+// 중고선 가격 컴포넌트
+function SecondhandPrices() {
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>중고선 가격</Typography>
+      <DataTable 
+        data={MOCK_SECONDHAND_PRICES}
+        columns={[
+          { key: 'type', label: '선종' },
+          { key: 'size', label: '크기' },
+          { key: 'age', label: '선령' },
+          { key: 'price', label: '가격' },
+          { key: 'change', label: '변동' }
+        ]}
+      />
+    </Box>
+  );
+}
+
+// 벙커유 가격 컴포넌트
+function BunkerPrices() {
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>벙커유 가격</Typography>
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={7}>
+          <DataTable 
+            data={MOCK_BUNKER_PRICES}
+            columns={[
+              { key: 'type', label: '유종' },
+              { key: 'location', label: '지역' },
+              { key: 'price', label: '가격' },
+              { key: 'change', label: '변동' },
+              { key: 'date', label: '날짜' }
+            ]}
+          />
+        </Grid>
+        <Grid item xs={12} md={5}>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>VLSFO 가격 추이</Typography>
+            <Box sx={{ height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={MOCK_BUNKER_CHART_DATA}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="VLSFO" stroke="#ff7300" />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+}
+
+// 항만 혼잡도 컴포넌트
+function PortCongestion() {
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>항만 혼잡도</Typography>
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={8}>
+          <DataTable 
+            data={MOCK_PORT_CONGESTION}
+            columns={[
+              { key: 'region', label: '지역' },
+              { key: 'port', label: '항만' },
+              { key: 'congestion', label: '혼잡도' },
+              { key: 'vessels', label: '대기 선박' },
+              { key: 'waitingTime', label: '평균 대기시간' },
+              { key: 'change', label: '변동' }
+            ]}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>지역별 항만 혼잡도</Typography>
+            <Box sx={{ height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { region: '아시아', congestion: 71.8 },
+                    { region: '유럽', congestion: 50.0 },
+                    { region: '북미', congestion: 54.0 },
+                    { region: '남미', congestion: 60.0 }
+                  ]}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="region" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="congestion" name="혼잡도 (%)" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+}
+
+// 단기 용선료 컴포넌트
+function ShortTermCharterRates() {
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>단기 용선료 (1년 이하)</Typography>
+      <DataTable 
+        data={MOCK_TC_RATES_SHORT}
+        columns={[
+          { key: 'type', label: '선종' },
+          { key: 'size', label: '크기' },
+          { key: 'rate', label: '용선료' },
+          { key: 'change', label: '변동' },
+          { key: 'period', label: '계약 기간' }
+        ]}
+      />
+    </Box>
+  );
+}
+
+// 장기 용선료 컴포넌트
+function LongTermCharterRates() {
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>장기 용선료 (1년 초과)</Typography>
+      <DataTable 
+        data={MOCK_TC_RATES_LONG}
+        columns={[
+          { key: 'type', label: '선종' },
+          { key: 'size', label: '크기' },
+          { key: 'rate', label: '용선료' },
+          { key: 'change', label: '변동' },
+          { key: 'period', label: '계약 기간' }
+        ]}
+      />
+    </Box>
+  );
+}
+
+// 운임 정보 컴포넌트
+function RouteRates() {
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>지역별 운임 정보</Typography>
+      <DataTable 
+        data={MOCK_ROUTE_RATES}
+        columns={[
+          { key: 'route', label: '항로' },
+          { key: 'vessel', label: '선종' },
+          { key: 'size', label: '크기' },
+          { key: 'rate', label: '운임' },
+          { key: 'change', label: '변동' },
+          { key: 'date', label: '날짜' }
+        ]}
+      />
+    </Box>
+  );
+}
+
 // 메인 대시보드 컴포넌트
 function Dashboard({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [shippingData, setShippingData] = useState([]);
   const [latestData, setLatestData] = useState(null);
   const [chartData, setChartData] = useState([]);
-  const username = localStorage.getItem('username') || '사용자';
+  const [tabIndex, setTabIndex] = useState(0);
+  
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+  };
 
   useEffect(() => {
     let isMounted = true;
     
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        const config = {
-          headers: { Authorization: `Bearer ${token}` }
-        };
-
-        console.log('데이터 로딩 시작...');
-        
-        // GitHub Pages 환경에서는 모의 데이터 사용
-        if (isProduction) {
-          setTimeout(() => {
-            if (isMounted) {
-              setLatestData(MOCK_SHIPPING_DATA);
-              setChartData(MOCK_CHART_DATA);
-              setLoading(false);
-            }
-          }, 1000);
-          return;
-        }
-        
-        // 로컬 개발 환경에서는 실제 API 호출
-        let fetchedLatestData = null;
-        let fetchedHistoryData = [];
-        
-        // 최신 인덱스 데이터 가져오기
-        try {
-          const response = await axios.get('/api/indices/latest', config);
-          console.log('최신 데이터 로드 성공:', response.data);
-          fetchedLatestData = response.data;
-          if (isMounted) setLatestData(response.data);
-        } catch (latestError) {
-          console.error('최신 데이터 로드 실패:', latestError);
-          if (isMounted) {
-            // 에러시 샘플 데이터 사용
-            setLatestData(MOCK_SHIPPING_DATA);
-            fetchedLatestData = MOCK_SHIPPING_DATA;
-          }
-        }
-        
-        // 모든 인덱스 데이터 가져오기
-        try {
-          const historyResponse = await axios.get('/api/indices', config);
-          console.log('기록 데이터 로드 성공:', historyResponse.data);
-          
-          // 배열이 아닌 경우 배열로 변환
-          fetchedHistoryData = Array.isArray(historyResponse.data) 
-            ? historyResponse.data 
-            : [historyResponse.data];
-          
-          if (isMounted) setShippingData(fetchedHistoryData);
-        } catch (historyError) {
-          console.error('기록 데이터 로드 실패:', historyError);
-          // 기본 데이터 설정 (샘플 데이터의 배열)
-          fetchedHistoryData = [fetchedLatestData || MOCK_SHIPPING_DATA];
-          if (isMounted) setShippingData(fetchedHistoryData);
-        }
-      } catch (err) {
-        console.error('데이터 로딩 에러:', err);
+    const loadData = () => {
+      setLoading(true);
+      
+      // GitHub Pages에서는 모의 데이터 사용
+      setTimeout(() => {
         if (isMounted) {
-          setError('데이터를 불러오는 중 오류가 발생했습니다.');
+          setLatestData(MOCK_SHIPPING_INDICES);
+          setChartData(MOCK_BDI_CHART_DATA);
           setLoading(false);
         }
-      }
+      }, 1000);
     };
 
-    fetchData();
+    loadData();
     
     return () => {
       isMounted = false;
@@ -323,11 +557,13 @@ function Dashboard({ onLogout }) {
   }, []);
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, bgcolor: 'background.default', minHeight: '100vh' }}>
       <Header onLogout={onLogout} />
-      <Container>
-        <Typography variant="h5" gutterBottom>
-          해운 시장 현황
+      
+      <Container maxWidth="xl">
+        {/* 주요 지수 섹션 */}
+        <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'medium' }}>
+          주요 해운 지수
         </Typography>
         
         {loading ? (
@@ -336,25 +572,9 @@ function Dashboard({ onLogout }) {
           </Box>
         ) : latestData ? (
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            {latestData.indices.map((index, i) => (
+            {latestData.indices.slice(0, 8).map((index, i) => (
               <Grid item xs={12} sm={6} md={3} key={i}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    {index.name}
-                  </Typography>
-                  <Typography variant="h5" component="div" sx={{ mb: 1 }}>
-                    {index.value}
-                  </Typography>
-                  <Typography 
-                    color={index.change && index.change.startsWith('+') ? 'success.main' : 'error.main'}
-                    variant="subtitle1"
-                  >
-                    {index.change || "0"}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {index.source || "데이터 소스"}
-                  </Typography>
-                </Paper>
+                <IndexCard index={index} />
               </Grid>
             ))}
           </Grid>
@@ -366,10 +586,10 @@ function Dashboard({ onLogout }) {
           </Paper>
         )}
 
-        {/* 차트 표시 */}
-        <Paper sx={{ p: 2 }}>
+        {/* BDI 차트 */}
+        <Paper sx={{ p: 2, mb: 4 }}>
           <Typography variant="h6" gutterBottom>
-            BDI 추이
+            BDI (Baltic Dry Index) 추이
           </Typography>
           <Box sx={{ height: 400 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -379,13 +599,60 @@ function Dashboard({ onLogout }) {
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
-                <YAxis />
+                <YAxis domain={['dataMin - 100', 'dataMax + 100']} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="BDI" stroke="#8884d8" />
+                <Line type="monotone" dataKey="BDI" stroke="#8884d8" strokeWidth={2} dot={{ r: 2 }} />
               </LineChart>
             </ResponsiveContainer>
           </Box>
+        </Paper>
+        
+        {/* 탭 섹션 */}
+        <Paper sx={{ mb: 4, pb: 2 }}>
+          <Tabs 
+            value={tabIndex} 
+            onChange={handleTabChange} 
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Tab label="건조 가격" />
+            <Tab label="중고선 가격" />
+            <Tab label="벙커유 가격" />
+            <Tab label="항만 혼잡도" />
+            <Tab label="단기 용선료" />
+            <Tab label="장기 용선료" />
+            <Tab label="지역별 운임" />
+          </Tabs>
+          
+          <TabPanel value={tabIndex} index={0}>
+            <NewbuildingPrices />
+          </TabPanel>
+          
+          <TabPanel value={tabIndex} index={1}>
+            <SecondhandPrices />
+          </TabPanel>
+          
+          <TabPanel value={tabIndex} index={2}>
+            <BunkerPrices />
+          </TabPanel>
+          
+          <TabPanel value={tabIndex} index={3}>
+            <PortCongestion />
+          </TabPanel>
+          
+          <TabPanel value={tabIndex} index={4}>
+            <ShortTermCharterRates />
+          </TabPanel>
+          
+          <TabPanel value={tabIndex} index={5}>
+            <LongTermCharterRates />
+          </TabPanel>
+          
+          <TabPanel value={tabIndex} index={6}>
+            <RouteRates />
+          </TabPanel>
         </Paper>
       </Container>
     </Box>
@@ -403,6 +670,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
+    localStorage.removeItem('role');
     setIsAuthenticated(false);
   };
 
