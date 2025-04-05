@@ -121,61 +121,33 @@ function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    try {
-      console.log('로그인 시도:', { username, password });
-      
-      // 모의 인증 사용
-      if (isProduction) {
-        const mockUser = MOCK_USERS.find(
-          user => user.username === username && user.password === password
-        );
-        
-        if (mockUser) {
-          console.log('모의 로그인 성공');
-          localStorage.setItem('token', mockUser.token);
-          localStorage.setItem('username', mockUser.username);
-          localStorage.setItem('role', mockUser.role);
-          setTimeout(() => {
-            setLoading(false);
-            onLogin(mockUser.token);
-          }, 500); // 실제 API 호출처럼 약간의 지연 추가
-        } else {
-          console.log('모의 로그인 실패');
-          setTimeout(() => {
-            setLoading(false);
-            setError('아이디 또는 비밀번호가 올바르지 않습니다.');
-          }, 500);
-        }
-        return;
-      }
-      
-      // 로컬 개발 환경에서는 실제 API 호출
-      const response = await axios.post('/api/auth/login', { username, password });
-      console.log('로그인 응답:', response.data);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('username', username);
-      localStorage.setItem('role', response.data.role || 'user');
-      setLoading(false);
-      onLogin(response.data.token);
-    } catch (err) {
-      console.error('로그인 에러:', err);
-      setLoading(false);
-      
-      if (err.response) {
-        console.error('서버 응답:', err.response.data);
-        setError(err.response.data.error || '로그인에 실패했습니다.');
-      } else if (err.request) {
-        console.error('요청 에러:', err.request);
-        setError('서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.');
-      } else {
-        console.error('기타 에러:', err.message);
-        setError('로그인 요청 중 오류가 발생했습니다.');
-      }
+    console.log('로그인 시도:', { username, password });
+    
+    // 항상 모의 인증 사용
+    const mockUser = MOCK_USERS.find(
+      user => user.username === username && user.password === password
+    );
+    
+    if (mockUser) {
+      console.log('모의 로그인 성공');
+      localStorage.setItem('token', mockUser.token);
+      localStorage.setItem('username', mockUser.username);
+      localStorage.setItem('role', mockUser.role);
+      setTimeout(() => {
+        setLoading(false);
+        onLogin(mockUser.token);
+      }, 500); // 실제 API 호출처럼 약간의 지연 추가
+    } else {
+      console.log('모의 로그인 실패');
+      setTimeout(() => {
+        setLoading(false);
+        setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+      }, 500);
     }
   };
 
