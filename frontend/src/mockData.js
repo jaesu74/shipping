@@ -8,7 +8,7 @@ export const MOCK_USERS = [
 
 // 기본 해운 지수 데이터
 export const MOCK_SHIPPING_INDICES = {
-  date: new Date().toISOString().split('T')[0],
+  date: "2023-04-05",
   indices: [
     // Baltic Exchange 지수
     { name: "BDI (Baltic Dry Index)", value: "1,432", change: "+15", source: "Baltic Exchange", category: "baltic" },
@@ -80,25 +80,25 @@ export const MOCK_SECONDHAND_PRICES = [
 // 전세계 벙커유 가격 데이터
 export const MOCK_BUNKER_PRICES = [
   // 원유 가격
-  { type: "원유", location: "WTI", price: "$76.25/배럴", change: "+$1.32", date: new Date().toISOString().split('T')[0] },
-  { type: "원유", location: "Brent", price: "$78.48/배럴", change: "+$1.05", date: new Date().toISOString().split('T')[0] },
-  { type: "원유", location: "Dubai", price: "$77.62/배럴", change: "+$0.98", date: new Date().toISOString().split('T')[0] },
+  { type: "원유", location: "WTI", price: "$76.25/배럴", change: "+$1.32", date: "2023-04-05" },
+  { type: "원유", location: "Brent", price: "$78.48/배럴", change: "+$1.05", date: "2023-04-05" },
+  { type: "원유", location: "Dubai", price: "$77.62/배럴", change: "+$0.98", date: "2023-04-05" },
   
   // 주요 항만별 벙커유 가격
-  { type: "VLSFO", location: "싱가포르", price: "$703.50/톤", change: "-$5.00", date: new Date().toISOString().split('T')[0] },
-  { type: "VLSFO", location: "로테르담", price: "$635.00/톤", change: "+$3.00", date: new Date().toISOString().split('T')[0] },
-  { type: "VLSFO", location: "후지라", price: "$683.50/톤", change: "+$2.50", date: new Date().toISOString().split('T')[0] },
-  { type: "VLSFO", location: "상해", price: "$712.00/톤", change: "-$4.50", date: new Date().toISOString().split('T')[0] },
-  { type: "VLSFO", location: "홍콩", price: "$718.50/톤", change: "-$3.00", date: new Date().toISOString().split('T')[0] },
+  { type: "VLSFO", location: "싱가포르", price: "$703.50/톤", change: "-$5.00", date: "2023-04-05" },
+  { type: "VLSFO", location: "로테르담", price: "$635.00/톤", change: "+$3.00", date: "2023-04-05" },
+  { type: "VLSFO", location: "후지라", price: "$683.50/톤", change: "+$2.50", date: "2023-04-05" },
+  { type: "VLSFO", location: "상해", price: "$712.00/톤", change: "-$4.50", date: "2023-04-05" },
+  { type: "VLSFO", location: "홍콩", price: "$718.50/톤", change: "-$3.00", date: "2023-04-05" },
   
-  { type: "MGO", location: "싱가포르", price: "$783.00/톤", change: "-$7.50", date: new Date().toISOString().split('T')[0] },
-  { type: "MGO", location: "로테르담", price: "$742.50/톤", change: "+$2.00", date: new Date().toISOString().split('T')[0] },
-  { type: "MGO", location: "후지라", price: "$765.50/톤", change: "+$1.50", date: new Date().toISOString().split('T')[0] },
-  { type: "MGO", location: "상해", price: "$792.00/톤", change: "-$5.50", date: new Date().toISOString().split('T')[0] },
+  { type: "MGO", location: "싱가포르", price: "$783.00/톤", change: "-$7.50", date: "2023-04-05" },
+  { type: "MGO", location: "로테르담", price: "$742.50/톤", change: "+$2.00", date: "2023-04-05" },
+  { type: "MGO", location: "후지라", price: "$765.50/톤", change: "+$1.50", date: "2023-04-05" },
+  { type: "MGO", location: "상해", price: "$792.00/톤", change: "-$5.50", date: "2023-04-05" },
   
-  { type: "IFO380", location: "싱가포르", price: "$498.00/톤", change: "-$6.50", date: new Date().toISOString().split('T')[0] },
-  { type: "IFO380", location: "로테르담", price: "$475.50/톤", change: "+$1.50", date: new Date().toISOString().split('T')[0] },
-  { type: "IFO380", location: "후지라", price: "$489.00/톤", change: "+$2.00", date: new Date().toISOString().split('T')[0] }
+  { type: "IFO380", location: "싱가포르", price: "$498.00/톤", change: "-$6.50", date: "2023-04-05" },
+  { type: "IFO380", location: "로테르담", price: "$475.50/톤", change: "+$1.50", date: "2023-04-05" },
+  { type: "IFO380", location: "후지라", price: "$489.00/톤", change: "+$2.00", date: "2023-04-05" }
 ];
 
 // 항만 혼잡도 상세 데이터
@@ -172,24 +172,24 @@ export const MOCK_TC_RATES_LONG = [
 // 지역별 운임 정보
 export const MOCK_ROUTE_RATES = [
   // 컨테이너 운임
-  { route: "중국-북유럽", vessel: "컨테이너선", size: "40ft", rate: "$1,785/FEU", change: "+$125", date: new Date().toISOString().split('T')[0] },
-  { route: "중국-지중해", vessel: "컨테이너선", size: "40ft", rate: "$1,950/FEU", change: "+$150", date: new Date().toISOString().split('T')[0] },
-  { route: "중국-서아프리카", vessel: "컨테이너선", size: "40ft", rate: "$2,830/FEU", change: "+$220", date: new Date().toISOString().split('T')[0] },
-  { route: "중국-미동부", vessel: "컨테이너선", size: "40ft", rate: "$2,350/FEU", change: "+$180", date: new Date().toISOString().split('T')[0] },
-  { route: "중국-미서부", vessel: "컨테이너선", size: "40ft", rate: "$1,880/FEU", change: "+$135", date: new Date().toISOString().split('T')[0] },
-  { route: "중국-동남아", vessel: "컨테이너선", size: "40ft", rate: "$1,080/FEU", change: "+$65", date: new Date().toISOString().split('T')[0] },
+  { route: "중국-북유럽", vessel: "컨테이너선", size: "40ft", rate: "$1,785/FEU", change: "+$125", date: "2023-04-05" },
+  { route: "중국-지중해", vessel: "컨테이너선", size: "40ft", rate: "$1,950/FEU", change: "+$150", date: "2023-04-05" },
+  { route: "중국-서아프리카", vessel: "컨테이너선", size: "40ft", rate: "$2,830/FEU", change: "+$220", date: "2023-04-05" },
+  { route: "중국-미동부", vessel: "컨테이너선", size: "40ft", rate: "$2,350/FEU", change: "+$180", date: "2023-04-05" },
+  { route: "중국-미서부", vessel: "컨테이너선", size: "40ft", rate: "$1,880/FEU", change: "+$135", date: "2023-04-05" },
+  { route: "중국-동남아", vessel: "컨테이너선", size: "40ft", rate: "$1,080/FEU", change: "+$65", date: "2023-04-05" },
 
   // 벌크 운임
-  { route: "브라질-중국", vessel: "벌크선", size: "케이프사이즈", rate: "$18.35/톤", change: "+$1.25", date: new Date().toISOString().split('T')[0] },
-  { route: "호주-중국", vessel: "벌크선", size: "케이프사이즈", rate: "$12.65/톤", change: "+$0.85", date: new Date().toISOString().split('T')[0] },
-  { route: "미동부-중국", vessel: "벌크선", size: "파나막스", rate: "$35.80/톤", change: "+$2.15", date: new Date().toISOString().split('T')[0] },
-  { route: "미서부-일본", vessel: "벌크선", size: "파나막스", rate: "$28.75/톤", change: "+$1.45", date: new Date().toISOString().split('T')[0] },
+  { route: "브라질-중국", vessel: "벌크선", size: "케이프사이즈", rate: "$18.35/톤", change: "+$1.25", date: "2023-04-05" },
+  { route: "호주-중국", vessel: "벌크선", size: "케이프사이즈", rate: "$12.65/톤", change: "+$0.85", date: "2023-04-05" },
+  { route: "미동부-중국", vessel: "벌크선", size: "파나막스", rate: "$35.80/톤", change: "+$2.15", date: "2023-04-05" },
+  { route: "미서부-일본", vessel: "벌크선", size: "파나막스", rate: "$28.75/톤", change: "+$1.45", date: "2023-04-05" },
 
   // 탱커 운임
-  { route: "중동-아시아", vessel: "탱커", size: "VLCC", rate: "WS 82.5", change: "+WS 5.0", date: new Date().toISOString().split('T')[0] },
-  { route: "서아프리카-중국", vessel: "탱커", size: "수에즈막스", rate: "WS 95.0", change: "+WS 6.5", date: new Date().toISOString().split('T')[0] },
-  { route: "발트해-북유럽", vessel: "탱커", size: "아프라막스", rate: "WS 105.0", change: "+WS 7.5", date: new Date().toISOString().split('T')[0] },
-  { route: "카리브해-미동부", vessel: "탱커", size: "MR", rate: "WS 120.0", change: "+WS 8.0", date: new Date().toISOString().split('T')[0] }
+  { route: "중동-아시아", vessel: "탱커", size: "VLCC", rate: "WS 82.5", change: "+WS 5.0", date: "2023-04-05" },
+  { route: "서아프리카-중국", vessel: "탱커", size: "수에즈막스", rate: "WS 95.0", change: "+WS 6.5", date: "2023-04-05" },
+  { route: "발트해-북유럽", vessel: "탱커", size: "아프라막스", rate: "WS 105.0", change: "+WS 7.5", date: "2023-04-05" },
+  { route: "카리브해-미동부", vessel: "탱커", size: "MR", rate: "WS 120.0", change: "+WS 8.0", date: "2023-04-05" }
 ];
 
 // BDI 히스토리 차트용 모의 데이터
