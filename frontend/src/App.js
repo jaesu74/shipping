@@ -189,17 +189,18 @@ function Login({ onLogin }) {
         minHeight: '100vh',
         background: 'linear-gradient(45deg, #f3f4f6 0%, #dbeafe 100%)',
       }}
+      className="login-container"
     >
-      <Paper sx={{ p: 4, maxWidth: 400, width: '100%', borderRadius: 2, boxShadow: 3 }}>
-        <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
+      <Paper sx={{ maxWidth: 400, width: '100%' }} className="login-paper">
+        <Typography variant="h5" component="h1" gutterBottom align="center" className="login-title">
           해운 데이터 모니터링 시스템
         </Typography>
-        <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" align="center" className="login-subtitle">
           로그인
         </Typography>
         
         {error && (
-          <Paper sx={{ p: 2, mb: 3, bgcolor: '#ffebee', borderRadius: 1 }}>
+          <Paper className="error-message">
             <Typography color="error" variant="body2">
               {error}
             </Typography>
@@ -231,16 +232,25 @@ function Login({ onLogin }) {
             variant="contained"
             color="primary"
             type="submit"
-            sx={{ mt: 3, mb: 1, py: 1.2 }}
+            sx={{ mt: 3, mb: 1 }}
             disabled={loading}
+            className="login-button"
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : '로그인'}
           </Button>
           
           {isProduction && (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block', textAlign: 'center' }}>
-              테스트 계정: admin / admin123 또는 user / user123
-            </Typography>
+            <Box mt={2}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+                테스트 계정으로 로그인하세요:
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+                관리자: admin / admin123
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+                일반 사용자: user / user123
+              </Typography>
+            </Box>
           )}
         </form>
       </Paper>
