@@ -28,8 +28,11 @@ import {
 } from 'recharts';
 import './App.css';
 
-// axios 기본 설정
-axios.defaults.baseURL = 'http://localhost:8080';
+// axios 기본 설정 - 환경에 따라 동적으로 설정
+const isProduction = window.location.hostname !== 'localhost';
+axios.defaults.baseURL = isProduction 
+  ? window.location.origin // GitHub Pages에서는 같은 도메인 사용
+  : 'http://localhost:8080';
 
 // 테마 설정
 const theme = createTheme({
@@ -44,22 +47,92 @@ const theme = createTheme({
   },
 });
 
+// 모의 인증 데이터 (GitHub Pages 배포용)
+const MOCK_USERS = [
+  { username: 'admin', password: 'admin123', token: 'admin-mock-token' },
+  { username: 'user', password: 'user123', token: 'user-mock-token' }
+];
+
+// 모의 데이터
+const MOCK_SHIPPING_DATA = {
+  date: new Date().toISOString().split('T')[0],
+  indices: [
+    { name: "BDI (Baltic Dry Index)", value: "1,432", change: "+15", source: "Baltic Exchange" },
+    { name: "BCI (Baltic Capesize Index)", value: "1,876", change: "+23", source: "Baltic Exchange" },
+    { name: "BPI (Baltic Panamax Index)", value: "1,543", change: "+11", source: "Baltic Exchange" },
+    { name: "BSI (Baltic Supramax Index)", value: "1,107", change: "-5", source: "Baltic Exchange" },
+    { name: "SCFI 종합지수", value: "834.23", change: "-12.5", source: "상하이 컨테이너 운임 지수" },
+    { name: "글로벌 평균 VLSFO", value: "685.50", change: "-2.5", source: "벙커유 가격" },
+    { name: "컨테이너 운임 (FEU)", value: "$2,430", change: "+$120", source: "컨테이너 운임" },
+    { name: "부산항 혼잡도", value: "68%", change: "+2%", source: "항만 데이터" }
+  ]
+};
+
+// 차트용 모의 데이터
+const MOCK_CHART_DATA = [
+  { date: '2023-11-01', BDI: 1200 },
+  { date: '2023-11-08', BDI: 1250 },
+  { date: '2023-11-15', BDI: 1340 },
+  { date: '2023-11-22', BDI: 1380 },
+  { date: '2023-11-29', BDI: 1320 },
+  { date: '2023-12-06', BDI: 1410 },
+  { date: '2023-12-13', BDI: 1380 },
+  { date: '2023-12-20', BDI: 1432 },
+  { date: '2023-12-27', BDI: 1410 },
+  { date: '2024-01-03', BDI: 1367 },
+  { date: '2024-01-10', BDI: 1432 },
+];
+
 // 로그인 컴포넌트
 function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
       console.log('로그인 시도:', { username, password });
+      
+      // GitHub Pages 환경에서는 모의 인증 사용
+      if (isProduction) {
+        const mockUser = MOCK_USERS.find(
+          user => user.username === username && user.password === password
+        );
+        
+        if (mockUser) {
+          console.log('모의 로그인 성공');
+          localStorage.setItem('token', mockUser.token);
+          localStorage.setItem('username', mockUser.username);
+          setTimeout(() => {
+            setLoading(false);
+            onLogin(mockUser.token);
+          }, 1000); // 실제 API 호출처럼 약간의 지연 추가
+        } else {
+          console.log('모의 로그인 실패');
+          setTimeout(() => {
+            setLoading(false);
+            setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+          }, 1000);
+        }
+        return;
+      }
+      
+      // 로컬 개발 환경에서는 실제 API 호출
       const response = await axios.post('/api/auth/login', { username, password });
       console.log('로그인 응답:', response.data);
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('username', username);
+      setLoading(false);
       onLogin(response.data.token);
     } catch (err) {
       console.error('로그인 에러:', err);
+      setLoading(false);
+      
       if (err.response) {
         console.error('서버 응답:', err.response.data);
         setError(err.response.data.error || '로그인에 실패했습니다.');
@@ -81,17 +154,25 @@ function Login({ onLogin }) {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
+        background: 'linear-gradient(45deg, #f3f4f6 0%, #dbeafe 100%)',
       }}
     >
-      <Paper sx={{ p: 4, maxWidth: 400, width: '100%' }}>
-        <Typography variant="h5" component="h1" gutterBottom>
+      <Paper sx={{ p: 4, maxWidth: 400, width: '100%', borderRadius: 2, boxShadow: 3 }}>
+        <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
+          해운 데이터 모니터링 시스템
+        </Typography>
+        <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 3 }}>
           로그인
         </Typography>
+        
         {error && (
-          <Typography color="error" gutterBottom>
-            {error}
-          </Typography>
+          <Paper sx={{ p: 2, mb: 3, bgcolor: '#ffebee', borderRadius: 1 }}>
+            <Typography color="error" variant="body2">
+              {error}
+            </Typography>
+          </Paper>
         )}
+        
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
@@ -99,6 +180,8 @@ function Login({ onLogin }) {
             margin="normal"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            disabled={loading}
+            required
           />
           <TextField
             fullWidth
@@ -107,16 +190,25 @@ function Login({ onLogin }) {
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+            required
           />
           <Button
             fullWidth
             variant="contained"
             color="primary"
             type="submit"
-            sx={{ mt: 2 }}
+            sx={{ mt: 3, mb: 1, py: 1.2 }}
+            disabled={loading}
           >
-            로그인
+            {loading ? <CircularProgress size={24} color="inherit" /> : '로그인'}
           </Button>
+          
+          {isProduction && (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block', textAlign: 'center' }}>
+              테스트 계정: admin / admin123 또는 user / user123
+            </Typography>
+          )}
         </form>
       </Paper>
     </Box>
@@ -125,11 +217,16 @@ function Login({ onLogin }) {
 
 // 헤더 컴포넌트
 function Header({ onLogout }) {
+  const username = localStorage.getItem('username') || '사용자';
+
   return (
     <AppBar position="static" sx={{ mb: 4 }}>
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           해운 데이터 모니터링 시스템
+        </Typography>
+        <Typography variant="body2" sx={{ mr: 2 }}>
+          {username}님 환영합니다
         </Typography>
         <IconButton color="inherit" onClick={onLogout} title="로그아웃">
           <ExitToAppIcon />
@@ -145,6 +242,8 @@ function Dashboard({ onLogout }) {
   const [error, setError] = useState(null);
   const [shippingData, setShippingData] = useState([]);
   const [latestData, setLatestData] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const username = localStorage.getItem('username') || '사용자';
 
   useEffect(() => {
     let isMounted = true;
@@ -159,37 +258,19 @@ function Dashboard({ onLogout }) {
 
         console.log('데이터 로딩 시작...');
         
-        // 기본 샘플 데이터 생성
-        const sampleData = {
-          date: new Date().toISOString().split('T')[0],
-          indices: [
-            {
-              name: "BDI (Baltic Dry Index)",
-              value: "1,432",
-              change: "+15",
-              source: "Baltic Exchange"
-            },
-            {
-              name: "BCI (Baltic Capesize Index)",
-              value: "1,876",
-              change: "+23",
-              source: "Baltic Exchange"
-            },
-            {
-              name: "SCFI 종합지수",
-              value: "834.23",
-              change: "-12.5",
-              source: "상하이 컨테이너 운임 지수"
-            },
-            {
-              name: "글로벌 평균 VLSFO",
-              value: "685.50",
-              change: "-2.5",
-              source: "벙커유 가격"
+        // GitHub Pages 환경에서는 모의 데이터 사용
+        if (isProduction) {
+          setTimeout(() => {
+            if (isMounted) {
+              setLatestData(MOCK_SHIPPING_DATA);
+              setChartData(MOCK_CHART_DATA);
+              setLoading(false);
             }
-          ]
-        };
+          }, 1000);
+          return;
+        }
         
+        // 로컬 개발 환경에서는 실제 API 호출
         let fetchedLatestData = null;
         let fetchedHistoryData = [];
         
@@ -203,8 +284,8 @@ function Dashboard({ onLogout }) {
           console.error('최신 데이터 로드 실패:', latestError);
           if (isMounted) {
             // 에러시 샘플 데이터 사용
-            setLatestData(sampleData);
-            fetchedLatestData = sampleData;
+            setLatestData(MOCK_SHIPPING_DATA);
+            fetchedLatestData = MOCK_SHIPPING_DATA;
           }
         }
         
@@ -222,80 +303,48 @@ function Dashboard({ onLogout }) {
         } catch (historyError) {
           console.error('기록 데이터 로드 실패:', historyError);
           // 기본 데이터 설정 (샘플 데이터의 배열)
-          fetchedHistoryData = [fetchedLatestData || sampleData];
+          fetchedHistoryData = [fetchedLatestData || MOCK_SHIPPING_DATA];
           if (isMounted) setShippingData(fetchedHistoryData);
         }
       } catch (err) {
-        console.error('데이터 로딩 중 일반 오류:', err);
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          window.location.reload();
-        } else {
-          if (isMounted) setError('데이터를 불러오는 중 오류가 발생했습니다.');
+        console.error('데이터 로딩 에러:', err);
+        if (isMounted) {
+          setError('데이터를 불러오는 중 오류가 발생했습니다.');
+          setLoading(false);
         }
-      } finally {
-        if (isMounted) setLoading(false);
       }
     };
 
     fetchData();
     
     return () => {
-      isMounted = false; // 컴포넌트 언마운트 시 플래그 설정
+      isMounted = false;
     };
-  }, []); // 빈 의존성 배열 - 컴포넌트가 마운트될 때만 실행
-
-  // 로딩 중 표시
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // 차트 데이터 처리
-  const chartData = [];
-  
-  // 실제 데이터가 있으면 사용
-  if (shippingData && shippingData.length > 0) {
-    shippingData.forEach(item => {
-      if (item && item.date && item.indices) {
-        const bdiItem = item.indices.find(i => i.name && i.name.includes('BDI'));
-        if (bdiItem) {
-          const bdiValue = parseFloat(String(bdiItem.value || "0").replace(/,/g, '')) || 0;
-          chartData.push({
-            date: item.date,
-            BDI: bdiValue
-          });
-        }
-      }
-    });
-  }
-  
-  // 데이터가 없으면 샘플 데이터 사용
-  if (chartData.length === 0) {
-    chartData.push({ date: '2023-01-01', BDI: 1500 });
-    chartData.push({ date: '2023-01-02', BDI: 1550 });
-    chartData.push({ date: '2023-01-03', BDI: 1600 });
-  }
+  }, []);
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Header onLogout={onLogout} />
-      <Container maxWidth="lg">
-        <Typography variant="h4" component="h1" gutterBottom>
-          해운 데이터 모니터링
+      <Container>
+        <Typography variant="h5" gutterBottom>
+          해운 시장 현황
         </Typography>
         
-        {/* 최신 데이터 표시 */}
-        {latestData && latestData.indices && latestData.indices.length > 0 ? (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : latestData ? (
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            {latestData.indices.map((index, idx) => (
-              <Grid item xs={12} sm={6} md={4} key={idx}>
-                <Paper sx={{ p: 2 }}>
-                  <Typography variant="h6">{index.name || "지수"}</Typography>
-                  <Typography variant="h4">{index.value || "N/A"}</Typography>
+            {latestData.indices.map((index, i) => (
+              <Grid item xs={12} sm={6} md={3} key={i}>
+                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    {index.name}
+                  </Typography>
+                  <Typography variant="h5" component="div" sx={{ mb: 1 }}>
+                    {index.value}
+                  </Typography>
                   <Typography 
                     color={index.change && index.change.startsWith('+') ? 'success.main' : 'error.main'}
                     variant="subtitle1"
@@ -353,6 +402,7 @@ function App() {
   
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
     setIsAuthenticated(false);
   };
 
