@@ -1,6 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
@@ -54,7 +54,7 @@ import {
 } from './mockData';
 
 // axios 기본 설정 - 환경에 따라 동적으로 설정
-const isProduction = window.location.hostname !== 'localhost';
+const isProduction = true; // GitHub Pages에서는 항상 모의 데이터 사용
 axios.defaults.baseURL = isProduction 
   ? window.location.origin // GitHub Pages에서는 같은 도메인 사용
   : 'http://localhost:8080';
@@ -129,7 +129,7 @@ function Login({ onLogin }) {
     try {
       console.log('로그인 시도:', { username, password });
       
-      // GitHub Pages 환경에서는 모의 인증 사용
+      // 모의 인증 사용
       if (isProduction) {
         const mockUser = MOCK_USERS.find(
           user => user.username === username && user.password === password
@@ -143,13 +143,13 @@ function Login({ onLogin }) {
           setTimeout(() => {
             setLoading(false);
             onLogin(mockUser.token);
-          }, 1000); // 실제 API 호출처럼 약간의 지연 추가
+          }, 500); // 실제 API 호출처럼 약간의 지연 추가
         } else {
           console.log('모의 로그인 실패');
           setTimeout(() => {
             setLoading(false);
             setError('아이디 또는 비밀번호가 올바르지 않습니다.');
-          }, 1000);
+          }, 500);
         }
         return;
       }
@@ -661,7 +661,15 @@ function Dashboard({ onLogout }) {
 
 // 메인 App 컴포넌트
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  useEffect(() => {
+    // 페이지 로드 시 토큰 확인
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   const handleLogin = (token) => {
     setIsAuthenticated(true);
