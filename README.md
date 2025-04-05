@@ -1,193 +1,94 @@
 # 해운 데이터 수집 및 모니터링 시스템
 
-해운 관련 주요 지수와 데이터를 자동으로 수집하고 모니터링하는 웹 애플리케이션입니다.
+이 시스템은 다양한 해운 관련 지수와 데이터를 수집하고 모니터링할 수 있는 웹 애플리케이션입니다. Baltic Dry Index, SCFI, 벙커유 가격, 컨테이너 운임, 항만 혼잡도 등의 데이터를 자동으로 수집하여 시각화합니다.
 
 ## 주요 기능
 
-- Baltic Exchange 지수 수집 (BDI, BCI, BPI, BSI, BHSI)
-- 상하이 컨테이너 운임 지수 (SCFI) 수집
-- 벙커유 가격 정보 수집
-- 신조선 가격 지수 수집
-- 중고선 가격 지수 수집
-- 정기용선료 지수 수집
-- 나용선료 지수 수집
-- 주요 항구별 운임 정보 수집
-- 주요 화물별 운임 정보 수집
-- 실시간 데이터 모니터링
-- 카테고리별 데이터 필터링
-- 데이터 CSV 다운로드
-- 이메일 알림 서비스
+- 해운 관련 지수 자동 수집
+- JWT 기반 사용자 인증
+- 관리자 및 일반 사용자 권한 분리
+- 데이터 시각화 대시보드
+- API 엔드포인트 제공
+- 자동 스케줄링 데이터 업데이트
 
 ## 기술 스택
 
-### 백엔드
-- Node.js
-- Express.js
-- Selenium WebDriver
-- Puppeteer
-- Winston (로깅)
-- Node-cron (스케줄링)
+- **백엔드**: Node.js, Express
+- **데이터 수집**: Axios, JSDOM, Puppeteer
+- **인증**: JWT, bcrypt
+- **프론트엔드**: React, Chart.js
+- **로깅**: Winston
+- **자동화**: node-cron
 
-### 프론트엔드
-- React.js
-- React Hooks
-- CSS3
+## 시작하기
 
-## 설치 및 실행 방법
+### 전제 조건
 
-1. 저장소 클론
+- Node.js 14.0 이상
+- npm 또는 yarn
+
+### 설치
+
 ```bash
-git clone [repository-url]
-```
+# 저장소 클론
+git clone https://github.com/yourusername/shipping-data-monitoring.git
+cd shipping-data-monitoring
 
-2. 백엔드 설정
-```bash
-cd backend
+# 의존성 설치
 npm install
-npm start
 ```
 
-3. 프론트엔드 설정
+### 환경 변수 설정
+
+`.env` 파일을 프로젝트 루트에 생성하고 다음과 같이 설정하세요:
+
+```
+PORT=3000
+JWT_SECRET=your_jwt_secret_key
+```
+
+### 실행
+
 ```bash
-cd frontend
-npm install
+# 개발 모드
+npm run dev
+
+# 프로덕션 모드
 npm start
+
+# 데이터 수집만 실행
+npm run collect
 ```
 
-4. 브라우저에서 접속
-- 프론트엔드: http://localhost:3000
-- 백엔드: http://localhost:5000
+## API 엔드포인트
 
-## 기본 계정 정보
-- 아이디: admin
-- 비밀번호: password
+### 인증
 
-## 데이터 수집 스케줄
-- 매일 오전 9시
-- 매일 오후 3시
+- `POST /login`: 사용자 로그인 및 JWT 토큰 발급
+
+### 데이터 API
+
+- `GET /api/shipping/latest`: 최신 해운 데이터 조회
+- `GET /api/shipping/history`: 해운 데이터 이력 조회
+- `POST /api/shipping/collect`: 해운 데이터 수집 실행 (관리자 전용)
+- `GET /api/shipping/indices/:type`: 특정 유형의 해운 지수 데이터 조회
+- `GET /api/status`: API 상태 확인
+
+## 사용자 계정
+
+기본 제공 계정:
+- 관리자: admin / admin123
+- 일반 사용자: user / user123
+
+## 데이터 수집 소스
+
+현재 이 시스템은 다음과 같은 데이터를 수집합니다:
+- Baltic Exchange 지수 (BDI, BCI, BPI, BDTI)
+- 상하이 컨테이너 운임 지수 (SCFI)
+- 벙커유 가격 (VLSFO)
+- 컨테이너 운임 (Freightos Baltic Index, Drewry WCI)
+- 항만 혼잡도 지수
 
 ## 라이선스
-ISC License 
 
-## 도메인 연결 및 배포 방법
-
-### 프론트엔드 배포 (GitHub Pages)
-
-1. 프론트엔드 디렉토리로 이동하여 gh-pages 패키지 설치
-```bash
-cd frontend
-npm install gh-pages --save-dev
-```
-
-2. package.json에 homepage 필드와 deploy 스크립트 확인
-```json
-"homepage": "https://ship.wvl.co.kr",
-"scripts": {
-  "predeploy": "npm run build",
-  "deploy": "gh-pages -d build"
-}
-```
-
-3. GitHub Pages 배포 실행
-```bash
-npm run deploy
-```
-
-4. GitHub 저장소 설정에서 Pages 설정 확인
-   - Settings > Pages > Source에서 gh-pages 브랜치 선택
-   - Custom domain에 ship.wvl.co.kr 입력
-
-### 백엔드 서버 배포 (Linux/Ubuntu 서버)
-
-1. PM2를 글로벌로 설치
-```bash
-npm install pm2 -g
-```
-
-2. 백엔드 코드 복제 및 의존성 설치
-```bash
-git clone https://github.com/jaesu74/shipping.git
-cd shipping/backend
-npm install
-```
-
-3. PM2로 서버 실행
-```bash
-pm2 start ecosystem.config.js --env production
-```
-
-4. Nginx 설정 (도메인 연결)
-```
-server {
-    listen 80;
-    server_name api.ship.wvl.co.kr;
-
-    location / {
-        proxy_pass http://localhost:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-5. Let's Encrypt로 SSL 인증서 발급
-```bash
-sudo certbot --nginx -d api.ship.wvl.co.kr
-```
-
-### DNS 설정 (도메인 공급자 웹사이트)
-
-1. `ship.wvl.co.kr` DNS 레코드 추가
-   - CNAME 레코드: `ship` → `jaesu74.github.io`
-
-2. `api.ship.wvl.co.kr` DNS 레코드 추가
-   - A 레코드: `api.ship` → 백엔드 서버 IP 주소
-
-### 도메인 확인
-
-설정이 완료되면 다음 주소로 접속 가능:
-- 프론트엔드: https://ship.wvl.co.kr
-- 백엔드 API: https://api.ship.wvl.co.kr 
-
-## 배포 방법 (Google Cloud Platform)
-
-### 필요한 설정
-
-1. Google Cloud Platform 서비스 계정 생성
-   - GCP 콘솔에서 IAM & Admin > Service Accounts로 이동
-   - 새 서비스 계정 생성 (App Engine Admin과 Cloud Build 권한 필요)
-   - 키 생성 (JSON 형식)
-
-2. GitHub Secrets 설정
-   - GitHub 레포지토리의 Settings > Secrets and variables > Actions로 이동
-   - 다음 Secrets 추가:
-     - `GCP_PROJECT_ID`: Google Cloud 프로젝트 ID (예: "SHIPPING")
-     - `GCP_SA_KEY`: 서비스 계정 키 전체 내용 (JSON 파일 내용)
-
-### 배포 프로세스
-
-1. 코드 변경 후 메인 브랜치에 Push
-```bash
-git add .
-git commit -m "업데이트 내용"
-git push origin main
-```
-
-2. GitHub Actions에서 자동으로 GCP App Engine에 배포
-   - GitHub 레포지토리의 Actions 탭에서 진행 상황 확인 가능
-
-### 수동 배포 (필요한 경우)
-
-```bash
-# 서비스 계정 인증 (최초 1회)
-gcloud auth activate-service-account --key-file=[키파일경로].json
-
-# 프로젝트 설정
-gcloud config set project SHIPPING
-
-# 앱 배포
-gcloud app deploy
-``` 
+ISC 

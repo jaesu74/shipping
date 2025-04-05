@@ -3,384 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>해운 데이터 센터</title>
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="해운 데이터 수집 및 모니터링 시스템">
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="logo192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>해운 데이터 모니터링 - 로그인</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f5f7fa;
-        }
-        .card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-            transition: transform 0.2s;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .card-header {
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-            font-weight: 600;
-        }
-        .stats-card {
-            text-align: center;
-            padding: 15px;
-        }
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-        }
-        .stat-label {
-            font-size: 14px;
-            color: #6c757d;
-        }
-        .positive {
-            color: #28a745;
-        }
-        .negative {
-            color: #dc3545;
-        }
-        .navbar-brand {
-            font-weight: 700;
-        }
-        .footer {
-            margin-top: 50px;
-            padding: 20px 0;
-            background-color: #343a40;
-            color: white;
-        }
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255,255,255,0.8);
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
         }
-        .category-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            padding: 15px;
+        }
+        .login-form {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .login-logo i {
+            font-size: 3rem;
+            color: #0d6efd;
+        }
+        .login-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 10px;
+            font-weight: 500;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .alert {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div id="loading">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
-
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/"><i class="bi bi-ship"></i> 해운 데이터 센터</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/">홈</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/indices">해운 지수</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/ports">항만 혼잡도</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/freight">운임 정보</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/market">시장 동향</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/api/status" target="_blank">API 상태</a>
-                    </li>
-                </ul>
+    <noscript>이 앱을 실행하려면 JavaScript를 활성화해야 합니다.</noscript>
+    <div class="login-container">
+        <div class="login-form">
+            <div class="login-logo">
+                <i class="bi bi-ship"></i>
             </div>
-        </div>
-    </nav>
-
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h1 class="text-center mb-4">실시간 해운 데이터 센터</h1>
-                        <p class="text-center">전 세계 해운 지수, 항만 현황, 운임 정보를 실시간으로 제공합니다.</p>
-                        <p class="text-center text-secondary" id="lastUpdate">최종 업데이트: 로딩 중...</p>
+            <h2 class="login-title">해운 데이터 모니터링</h2>
+            <div class="alert alert-danger" id="error-message" role="alert"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">사용자명</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" placeholder="사용자명 입력" required>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <h2 class="mt-4 mb-3">주요 지수</h2>
-        <div class="row" id="mainIndices">
-            <!-- 주요 지수 카드가 여기에 동적으로 추가됩니다 -->
-            <div class="col-12 text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+                <div class="form-group">
+                    <label for="password" class="form-label">비밀번호</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" placeholder="비밀번호 입력" required>
+                    </div>
                 </div>
+                <button type="submit" class="btn btn-primary btn-login">로그인</button>
+            </form>
+            <div class="login-footer">
+                <p>기본 계정 정보:</p>
+                <p>관리자: admin / admin123</p>
+                <p>일반 사용자: user / user123</p>
             </div>
-        </div>
-
-        <h2 class="mt-4 mb-3">항만 혼잡도</h2>
-        <div class="row" id="portCongestion">
-            <!-- 항만 혼잡도 카드가 여기에 동적으로 추가됩니다 -->
-            <div class="col-12 text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        </div>
-
-        <h2 class="mt-4 mb-3">주요 노선별 운임</h2>
-        <div class="row" id="freightRates">
-            <!-- 운임 정보 카드가 여기에 동적으로 추가됩니다 -->
-            <div class="col-12 text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        </div>
-
-        <h2 class="mt-4 mb-3">데이터 카테고리</h2>
-        <div class="row" id="categories">
-            <!-- 카테고리 카드가 여기에 동적으로 추가됩니다 -->
         </div>
     </div>
-
-    <footer class="footer mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>해운 데이터 센터</h5>
-                    <p>글로벌 해운 시장 데이터를 실시간으로 제공합니다.</p>
-                </div>
-                <div class="col-md-3">
-                    <h5>바로가기</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="/" class="text-white">홈</a></li>
-                        <li><a href="/indices" class="text-white">해운 지수</a></li>
-                        <li><a href="/ports" class="text-white">항만 혼잡도</a></li>
-                        <li><a href="/freight" class="text-white">운임 정보</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <h5>API</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="/api/status" class="text-white">API 상태</a></li>
-                        <li><a href="/api/indices" class="text-white">지수 데이터</a></li>
-                        <li><a href="/api/ports" class="text-white">항만 데이터</a></li>
-                        <li><a href="/api/freight-rates" class="text-white">운임 데이터</a></li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="bg-white">
-            <div class="text-center">
-                <p>&copy; 2023 해운 데이터 센터. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 로딩 인디케이터
-            const loading = document.getElementById('loading');
+            const loginForm = document.getElementById('login-form');
+            const errorMessage = document.getElementById('error-message');
             
-            // 데이터 로드 함수
-            async function loadData() {
+            // 기존 토큰이 있으면 대시보드로 이동
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = 'dashboard.html';
+            }
+            
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
                 try {
-                    // 카테고리 데이터 로드
-                    const categoriesResponse = await fetch('/api/categories');
-                    const categoriesData = await categoriesResponse.json();
-                    renderCategories(categoriesData.categories);
+                    // 로그인 요청
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
                     
-                    // 대시보드 데이터 로드
-                    const dashboardResponse = await fetch('/api/dashboard');
-                    const dashboardData = await dashboardResponse.json();
-                    
-                    // 최종 업데이트 시간 표시
-                    document.getElementById('lastUpdate').textContent = 
-                        `최종 업데이트: ${new Date(dashboardData.timestamp).toLocaleString('ko-KR')}`;
-                    
-                    // 주요 지수 렌더링
-                    renderMainIndices(dashboardData.indices);
-                    
-                    // 항만 혼잡도 렌더링
-                    renderPortCongestion(dashboardData.ports);
-                    
-                    // 운임 정보 렌더링
-                    renderFreightRates(dashboardData.freight);
-                    
-                    // 로딩 인디케이터 숨기기
-                    loading.style.display = 'none';
-                } catch (error) {
-                    console.error('데이터 로드 중 오류 발생:', error);
-                    document.getElementById('lastUpdate').textContent = 
-                        '데이터 로드 중 오류가 발생했습니다.';
-                    loading.style.display = 'none';
-                }
-            }
-            
-            // 카테고리 렌더링 함수
-            function renderCategories(categories) {
-                const categoriesContainer = document.getElementById('categories');
-                categoriesContainer.innerHTML = '';
-                
-                categories.forEach(category => {
-                    const col = document.createElement('div');
-                    col.className = 'col-lg-3 col-md-4 col-sm-6 mb-4';
-                    
-                    col.innerHTML = `
-                        <div class="card h-100 text-center">
-                            <div class="card-body">
-                                <div class="category-icon">
-                                    <i class="bi bi-${category.icon}"></i>
-                                </div>
-                                <h5 class="card-title">${category.name}</h5>
-                                <a href="/${category.id}" class="btn btn-sm btn-outline-primary mt-2">자세히 보기</a>
-                            </div>
-                        </div>
-                    `;
-                    
-                    categoriesContainer.appendChild(col);
-                });
-            }
-            
-            // 주요 지수 렌더링 함수
-            function renderMainIndices(data) {
-                const indicesContainer = document.getElementById('mainIndices');
-                indicesContainer.innerHTML = '';
-                
-                // 주요 지수만 필터링 (상위 4개)
-                const topIndices = data.indices
-                    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
-                    .slice(0, 4);
-                
-                topIndices.forEach(index => {
-                    const col = document.createElement('div');
-                    col.className = 'col-lg-3 col-md-6 col-sm-6 mb-4';
-                    
-                    const changeClass = index.changePercent >= 0 ? 'positive' : 'negative';
-                    const changeIcon = index.changePercent >= 0 ? 'bi-arrow-up' : 'bi-arrow-down';
-                    const changeSign = index.changePercent >= 0 ? '+' : '';
-                    
-                    col.innerHTML = `
-                        <div class="card h-100">
-                            <div class="card-header bg-dark text-white">
-                                ${index.name}
-                            </div>
-                            <div class="card-body stats-card">
-                                <div class="stat-value">${index.value.toLocaleString()}</div>
-                                <div class="stat-change ${changeClass}">
-                                    <i class="bi ${changeIcon}"></i> 
-                                    ${changeSign}${index.changePercent.toFixed(2)}%
-                                </div>
-                                <div class="stat-label mt-2">
-                                    출처: ${index.source} | ${data.date}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    indicesContainer.appendChild(col);
-                });
-            }
-            
-            // 항만 혼잡도 렌더링 함수
-            function renderPortCongestion(data) {
-                const portContainer = document.getElementById('portCongestion');
-                portContainer.innerHTML = '';
-                
-                // 항만 혼잡도 상위 4개
-                const topPorts = data.ports
-                    .sort((a, b) => b.congestionLevel - a.congestionLevel)
-                    .slice(0, 4);
-                
-                topPorts.forEach(port => {
-                    const col = document.createElement('div');
-                    col.className = 'col-lg-3 col-md-6 col-sm-6 mb-4';
-                    
-                    let levelClass = '';
-                    if (port.congestionLevel >= 7) {
-                        levelClass = 'bg-danger text-white';
-                    } else if (port.congestionLevel >= 4) {
-                        levelClass = 'bg-warning';
-                    } else {
-                        levelClass = 'bg-success text-white';
+                    if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.error || '로그인에 실패했습니다.');
                     }
                     
-                    col.innerHTML = `
-                        <div class="card h-100">
-                            <div class="card-header ${levelClass}">
-                                ${port.name} (${port.country})
-                            </div>
-                            <div class="card-body stats-card">
-                                <div class="stat-value">${port.congestionLevel}/10</div>
-                                <div class="stat-label">혼잡도 레벨</div>
-                                <div class="mt-2">
-                                    <small>대기 선박: ${port.waitingVessels}척</small><br>
-                                    <small>평균 대기시간: ${port.avgWaitTime}시간</small>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    const data = await response.json();
                     
-                    portContainer.appendChild(col);
-                });
-            }
-            
-            // 운임 정보 렌더링 함수
-            function renderFreightRates(data) {
-                const ratesContainer = document.getElementById('freightRates');
-                ratesContainer.innerHTML = '';
-                
-                // 주요 운임 정보 상위 4개
-                const topRoutes = data.routes
-                    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
-                    .slice(0, 4);
-                
-                topRoutes.forEach(route => {
-                    const col = document.createElement('div');
-                    col.className = 'col-lg-3 col-md-6 col-sm-6 mb-4';
+                    // 토큰 저장
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
                     
-                    const changeClass = route.changePercent >= 0 ? 'positive' : 'negative';
-                    const changeIcon = route.changePercent >= 0 ? 'bi-arrow-up' : 'bi-arrow-down';
-                    const changeSign = route.changePercent >= 0 ? '+' : '';
-                    
-                    col.innerHTML = `
-                        <div class="card h-100">
-                            <div class="card-header bg-dark text-white">
-                                ${route.origin} → ${route.destination}
-                            </div>
-                            <div class="card-body stats-card">
-                                <div class="stat-value">$${route.rate.toLocaleString()}</div>
-                                <div class="stat-change ${changeClass}">
-                                    <i class="bi ${changeIcon}"></i> 
-                                    ${changeSign}${route.changePercent.toFixed(2)}%
-                                </div>
-                                <div class="stat-label mt-2">
-                                    ${route.vesselType} | ${route.unit}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    ratesContainer.appendChild(col);
-                });
-            }
-            
-            // 데이터 로드 시작
-            loadData();
+                    // 대시보드로 이동
+                    window.location.href = 'dashboard.html';
+                } catch (error) {
+                    // 에러 메시지 표시
+                    errorMessage.textContent = error.message;
+                    errorMessage.style.display = 'block';
+                }
+            });
         });
     </script>
 </body>

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="해운 데이터 수집 및 모니터링 시스템 대시보드"
+    />
+    <link rel="icon" href="favicon.ico" />
+    <title>해운 데이터 대시보드</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: 'Noto Sans KR', sans-serif;
+        background-color: #f5f5f5;
+      }
+      .navbar-brand {
+        font-weight: 700;
+      }
+      .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        border: none;
+      }
+      .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid #eee;
+        font-weight: 600;
+        padding: 0.75rem 1.25rem;
+        border-radius: 10px 10px 0 0 !important;
+      }
+      .bg-primary-light {
+        background-color: rgba(13, 110, 253, 0.1);
+      }
+      .text-primary-dark {
+        color: #0a58ca;
+      }
+      .index-change-up {
+        color: #dc3545;
+      }
+      .index-change-down {
+        color: #198754;
+      }
+      .index-card {
+        transition: all 0.3s ease;
+      }
+      .index-card:hover {
+        transform: translateY(-5px);
+      }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        padding: 48px 0 0;
+        box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+      }
+      .sidebar-sticky {
+        position: relative;
+        top: 0;
+        height: calc(100vh - 48px);
+        padding-top: .5rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">해운 데이터 모니터링</a>
+      <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="navbar-nav">
+        <div class="nav-item text-nowrap">
+          <a class="nav-link px-3" href="#" id="logoutBtn">로그아웃</a>
+        </div>
+      </div>
+    </header>
+    
+    <div class="container-fluid">
+      <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+          <div class="position-sticky pt-3 sidebar-sticky">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link active" href="#">
+                  <i class="bi bi-speedometer2 me-2"></i>
+                  대시보드
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-category="baltic">
+                  <i class="bi bi-bar-chart-line me-2"></i>
+                  Baltic Exchange 지수
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-category="container">
+                  <i class="bi bi-box-seam me-2"></i>
+                  컨테이너 운임
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-category="bunker">
+                  <i class="bi bi-fuel-pump me-2"></i>
+                  벙커유 가격
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-category="port">
+                  <i class="bi bi-geo-alt me-2"></i>
+                  항만 혼잡도
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-category="all">
+                  <i class="bi bi-grid-3x3-gap me-2"></i>
+                  전체 지수
+                </a>
+              </li>
+            </ul>
+            
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+              <span>데이터 관리</span>
+            </h6>
+            <ul class="nav flex-column mb-2">
+              <li class="nav-item">
+                <a class="nav-link" href="#" id="collectDataBtn">
+                  <i class="bi bi-cloud-download me-2"></i>
+                  데이터 수집
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" id="downloadDataBtn">
+                  <i class="bi bi-file-earmark-arrow-down me-2"></i>
+                  데이터 다운로드
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+        
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">해운 지수 대시보드</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+              <div class="btn-group me-2">
+                <span class="btn btn-sm btn-outline-secondary" id="lastUpdated">최종 업데이트: 로딩 중...</span>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="refreshBtn">
+                <i class="bi bi-arrow-repeat"></i>
+                새로고침
+              </button>
+            </div>
+          </div>
+          
+          <!-- 상태 알림 -->
+          <div class="alert alert-info alert-dismissible fade show" role="alert" id="statusAlert" style="display: none;">
+            <span id="statusMessage"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          
+          <!-- 주요 지수 요약 -->
+          <div class="row my-4">
+            <div class="col-md-3">
+              <div class="card bg-primary-light index-card">
+                <div class="card-body">
+                  <h5 class="card-title text-primary-dark">BDI</h5>
+                  <h3 class="card-text" id="bdiValue">로딩 중...</h3>
+                  <p class="card-text">
+                    <span class="index-change" id="bdiChange">-</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-light index-card">
+                <div class="card-body">
+                  <h5 class="card-title text-primary-dark">SCFI</h5>
+                  <h3 class="card-text" id="scfiValue">로딩 중...</h3>
+                  <p class="card-text">
+                    <span class="index-change" id="scfiChange">-</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-light index-card">
+                <div class="card-body">
+                  <h5 class="card-title text-primary-dark">벙커유 (VLSFO)</h5>
+                  <h3 class="card-text" id="bunkerValue">로딩 중...</h3>
+                  <p class="card-text">
+                    <span class="index-change" id="bunkerChange">-</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-light index-card">
+                <div class="card-body">
+                  <h5 class="card-title text-primary-dark">FBX 글로벌</h5>
+                  <h3 class="card-text" id="fbxValue">로딩 중...</h3>
+                  <p class="card-text">
+                    <span class="index-change" id="fbxChange">-</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 차트 -->
+          <div class="row my-4">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <span>Baltic Exchange 지수 추이</span>
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary btn-sm">주간</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">월간</button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <canvas id="balticChart" height="250"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <span>컨테이너 운임 추이</span>
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary btn-sm">주간</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">월간</button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <canvas id="containerChart" height="250"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 세부 지수 테이블 -->
+          <div class="row my-4">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  전체 해운 지수
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-striped table-sm">
+                      <thead>
+                        <tr>
+                          <th>지수명</th>
+                          <th>값</th>
+                          <th>변동</th>
+                          <th>출처</th>
+                        </tr>
+                      </thead>
+                      <tbody id="indicesTable">
+                        <tr>
+                          <td colspan="4" class="text-center">데이터를 불러오는 중입니다...</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // 토큰 확인
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'index.html';
+      }
+      
+      // API 요청 헤더
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      
+      // 데이터 로드 함수
+      async function loadData() {
+        try {
+          const response = await fetch('/api/shipping/latest', {
+            headers
+          });
+          
+          if (response.status === 401 || response.status === 403) {
+            // 인증 오류
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+            return;
+          }
+          
+          if (!response.ok) {
+            throw new Error('데이터를 불러오는데 실패했습니다');
+          }
+          
+          const data = await response.json();
+          
+          // 최종 업데이트 시간 표시
+          document.getElementById('lastUpdated').textContent = `최종 업데이트: ${new Date(data.date).toLocaleString()}`;
+          
+          // 주요 지수 업데이트
+          updateMainIndices(data.indices);
+          
+          // 지수 테이블 업데이트
+          updateIndicesTable(data.indices);
+          
+          return data;
+        } catch (error) {
+          showAlert('오류: ' + error.message, 'danger');
+          console.error('데이터 로드 오류:', error);
+        }
+      }
+      
+      // 주요 지수 값 업데이트
+      function updateMainIndices(indices) {
+        // BDI
+        const bdi = indices.find(index => index.name === 'BDI (Baltic Dry Index)');
+        if (bdi) {
+          document.getElementById('bdiValue').textContent = bdi.value;
+          const bdiChangeEl = document.getElementById('bdiChange');
+          bdiChangeEl.textContent = bdi.change;
+          if (bdi.change.startsWith('+')) {
+            bdiChangeEl.className = 'index-change index-change-up';
+          } else if (bdi.change.startsWith('-')) {
+            bdiChangeEl.className = 'index-change index-change-down';
+          }
+        }
+        
+        // SCFI
+        const scfi = indices.find(index => index.name === 'SCFI 종합지수');
+        if (scfi) {
+          document.getElementById('scfiValue').textContent = scfi.value;
+          const scfiChangeEl = document.getElementById('scfiChange');
+          scfiChangeEl.textContent = scfi.change;
+          if (scfi.change.startsWith('+')) {
+            scfiChangeEl.className = 'index-change index-change-up';
+          } else if (scfi.change.startsWith('-')) {
+            scfiChangeEl.className = 'index-change index-change-down';
+          }
+        }
+        
+        // Bunker
+        const bunker = indices.find(index => index.name === '글로벌 평균 VLSFO');
+        if (bunker) {
+          document.getElementById('bunkerValue').textContent = bunker.value;
+          const bunkerChangeEl = document.getElementById('bunkerChange');
+          bunkerChangeEl.textContent = bunker.change;
+          if (bunker.change.startsWith('+')) {
+            bunkerChangeEl.className = 'index-change index-change-up';
+          } else if (bunker.change.startsWith('-')) {
+            bunkerChangeEl.className = 'index-change index-change-down';
+          }
+        }
+        
+        // FBX
+        const fbx = indices.find(index => index.name === 'FBX 글로벌 컨테이너 운임');
+        if (fbx) {
+          document.getElementById('fbxValue').textContent = fbx.value;
+          const fbxChangeEl = document.getElementById('fbxChange');
+          fbxChangeEl.textContent = fbx.change;
+          if (fbx.change.startsWith('+')) {
+            fbxChangeEl.className = 'index-change index-change-up';
+          } else if (fbx.change.startsWith('-')) {
+            fbxChangeEl.className = 'index-change index-change-down';
+          }
+        }
+      }
+      
+      // 지수 테이블 업데이트
+      function updateIndicesTable(indices) {
+        const tableBody = document.getElementById('indicesTable');
+        tableBody.innerHTML = '';
+        
+        indices.forEach(index => {
+          const row = document.createElement('tr');
+          
+          const nameCell = document.createElement('td');
+          nameCell.textContent = index.name;
+          
+          const valueCell = document.createElement('td');
+          valueCell.textContent = index.value;
+          
+          const changeCell = document.createElement('td');
+          changeCell.textContent = index.change;
+          if (index.change.startsWith('+')) {
+            changeCell.className = 'index-change-up';
+          } else if (index.change.startsWith('-')) {
+            changeCell.className = 'index-change-down';
+          }
+          
+          const sourceCell = document.createElement('td');
+          sourceCell.textContent = index.source;
+          
+          row.appendChild(nameCell);
+          row.appendChild(valueCell);
+          row.appendChild(changeCell);
+          row.appendChild(sourceCell);
+          
+          tableBody.appendChild(row);
+        });
+      }
+      
+      // 상태 알림 표시
+      function showAlert(message, type = 'info') {
+        const alertEl = document.getElementById('statusAlert');
+        const messageEl = document.getElementById('statusMessage');
+        
+        alertEl.className = `alert alert-${type} alert-dismissible fade show`;
+        messageEl.textContent = message;
+        alertEl.style.display = 'block';
+        
+        // 5초 후 자동으로 닫기
+        setTimeout(() => {
+          alertEl.style.display = 'none';
+        }, 5000);
+      }
+      
+      // 데이터 수집 실행
+      async function collectData() {
+        try {
+          showAlert('데이터 수집을 시작합니다...', 'info');
+          
+          const response = await fetch('/api/shipping/collect', {
+            method: 'POST',
+            headers
+          });
+          
+          if (response.status === 401 || response.status === 403) {
+            showAlert('데이터 수집 권한이 없습니다', 'danger');
+            return;
+          }
+          
+          if (!response.ok) {
+            throw new Error('데이터 수집에 실패했습니다');
+          }
+          
+          const result = await response.json();
+          showAlert(result.message, 'success');
+          
+          // 데이터 다시 로드
+          loadData();
+        } catch (error) {
+          showAlert('오류: ' + error.message, 'danger');
+          console.error('데이터 수집 오류:', error);
+        }
+      }
+      
+      // 차트 초기화
+      function initCharts(data) {
+        // Baltic 차트
+        const balticIndices = data.indices.filter(index => index.source === 'Baltic Exchange');
+        const balticCtx = document.getElementById('balticChart').getContext('2d');
+        new Chart(balticCtx, {
+          type: 'bar',
+          data: {
+            labels: balticIndices.map(index => index.name.replace(' (Baltic Dry Index)', '').replace(' (Baltic Capesize Index)', '').replace(' (Baltic Panamax Index)', '').replace(' (Baltic Dirty Tanker Index)', '')),
+            datasets: [{
+              label: 'Baltic Exchange 지수',
+              data: balticIndices.map(index => parseFloat(index.value)),
+              backgroundColor: [
+                'rgba(54, 162, 235, 0.5)',
+                'rgba(255, 99, 132, 0.5)',
+                'rgba(255, 206, 86, 0.5)',
+                'rgba(75, 192, 192, 0.5)'
+              ],
+              borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)'
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: false
+              }
+            }
+          }
+        });
+        
+        // 컨테이너 차트
+        const containerIndices = data.indices.filter(index => 
+          index.source === 'Freightos Baltic Index' || 
+          index.source === 'Drewry WCI'
+        );
+        const containerCtx = document.getElementById('containerChart').getContext('2d');
+        new Chart(containerCtx, {
+          type: 'bar',
+          data: {
+            labels: containerIndices.map(index => index.name),
+            datasets: [{
+              label: '컨테이너 운임',
+              data: containerIndices.map(index => parseFloat(index.value)),
+              backgroundColor: 'rgba(75, 192, 192, 0.5)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: false
+              }
+            }
+          }
+        });
+      }
+      
+      // 이벤트 리스너
+      document.getElementById('refreshBtn').addEventListener('click', loadData);
+      document.getElementById('collectDataBtn').addEventListener('click', collectData);
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        localStorage.removeItem('token');
+        window.location.href = 'index.html';
+      });
+      
+      document.getElementById('downloadDataBtn').addEventListener('click', async function() {
+        try {
+          const response = await fetch('/api/shipping/history', {
+            headers
+          });
+          
+          if (!response.ok) {
+            throw new Error('데이터를 불러오는데 실패했습니다');
+          }
+          
+          const data = await response.json();
+          
+          // CSV 포맷으로 변환
+          let csv = 'date,name,value,change,source\n';
+          data.forEach(item => {
+            item.indices.forEach(index => {
+              csv += `"${item.date}","${index.name}","${index.value}","${index.change}","${index.source}"\n`;
+            });
+          });
+          
+          // 다운로드
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `shipping_data_${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          
+          showAlert('데이터가 CSV 파일로 다운로드되었습니다', 'success');
+        } catch (error) {
+          showAlert('오류: ' + error.message, 'danger');
+          console.error('데이터 다운로드 오류:', error);
+        }
+      });
+      
+      // 카테고리별 필터링
+      document.querySelectorAll('[data-category]').forEach(link => {
+        link.addEventListener('click', async function(event) {
+          event.preventDefault();
+          const category = this.getAttribute('data-category');
+          
+          // 모든 링크에서 active 클래스 제거
+          document.querySelectorAll('.nav-link').forEach(navLink => {
+            navLink.classList.remove('active');
+          });
+          
+          // 현재 링크에 active 클래스 추가
+          this.classList.add('active');
+          
+          if (category === 'all') {
+            // 전체 데이터 로드
+            await loadData();
+          } else {
+            // 특정 카테고리 데이터 로드
+            try {
+              const response = await fetch(`/api/shipping/indices/${category}`, {
+                headers
+              });
+              
+              if (!response.ok) {
+                throw new Error('데이터를 불러오는데 실패했습니다');
+              }
+              
+              const data = await response.json();
+              
+              // 지수 테이블 업데이트
+              updateIndicesTable(data.indices);
+              
+              // 주요 지수 업데이트 (해당 카테고리에 있다면)
+              updateMainIndices(data.indices);
+              
+            } catch (error) {
+              showAlert('오류: ' + error.message, 'danger');
+              console.error('데이터 로드 오류:', error);
+            }
+          }
+        });
+      });
+      
+      // 초기 데이터 로드
+      loadData().then(data => {
+        if (data) {
+          // 차트 초기화
+          initCharts(data);
+        }
+      });
+    </script>
+  </body>
+</html> 

@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for ship.wvl.co.kr
 
 on:
   push:
@@ -61,9 +61,57 @@ jobs:
         npm ci
         npm run build
         
-    - name: Deploy to Google Cloud
-      uses: google-github-actions/deploy-appengine@v1
+    - name: Setup SSH key
+      uses: webfactory/ssh-agent@v0.5.4
       with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        credentials: ${{ secrets.GCP_SA_KEY }}
-        deliverables: app.yaml 
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+    - name: Setup known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to ship.wvl.co.kr
+      run: |
+        # Create deployment package
+        mkdir -p deploy
+        cp -r backend data-collector.js server.js api-routes.js package.json package-lock.json .env.example deploy/
+        mkdir -p deploy/public
+        cp -r frontend/build/* deploy/public/
+        
+        # Create deploy script
+        cat > deploy.sh << 'EOL'
+        #!/bin/bash
+        echo "Starting deployment to ship.wvl.co.kr..."
+        # Compress the deployment package
+        tar -czf deploy.tar.gz deploy
+        
+        # Copy to server
+        scp deploy.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/
+        
+        # Execute remote deployment commands
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ENDSSH'
+        cd /var/www/ship.wvl.co.kr
+        # Backup current deployment
+        if [ -d "current" ]; then
+          mv current previous_$(date +%Y%m%d%H%M%S)
+        fi
+        # Extract new deployment
+        mkdir -p current
+        tar -xzf /tmp/deploy.tar.gz -C current --strip-components=1
+        cd current
+        # Install dependencies
+        npm ci --production
+        # Setup environment variables
+        cp /var/www/ship.wvl.co.kr/.env .env
+        # Restart the service
+        pm2 restart ship-monitor || pm2 start server.js --name ship-monitor
+        # Cleanup
+        rm /tmp/deploy.tar.gz
+        echo "Deployment completed successfully!"
+        ENDSSH
+        EOL
+        
+        # Execute deploy script
+        chmod +x deploy.sh
+        ./deploy.sh 
